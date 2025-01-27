@@ -23,4 +23,9 @@ def generate_story():
 
 if __name__ == '__main__':
     # debug=True helps for development
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=80)
+
+
+@app.route('/')
+def home():
+    return "Flask app is running!"
