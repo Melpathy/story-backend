@@ -30,23 +30,30 @@ replicate_client = replicate.Client(api_token=replicate_api_key)
 
 def generate_image(prompt):
     """
-    Generate an image using Replicate's Stable Diffusion model.
+    Generate an image using Replicate's Stable Diffusion 3 model.
     """
-    # Full model version ID
-    model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe81863cbe77e4"
+    # Model identifier for Stable Diffusion 3
+    model_version = "stability-ai/stable-diffusion-3"
 
     try:
         # Input parameters for Stable Diffusion
         input_data = {
             "prompt": prompt,
-            "scheduler": "K_EULER"  # Optional, based on documentation
+            "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
         }
 
         # Call the Replicate API to create a prediction
-        output = replicate.run(model_version, input=input_data)
+        logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
+        output = replicate_client.run(model_version, input=input_data)
 
-        # Log and return the first generated image URL
-        logging.info(f"Image generated successfully: {output[0]}")
+        # Save and log each generated image
+        for index, item in enumerate(output):
+            filename = f"output_{index}.webp"
+            with open(filename, "wb") as file:
+                file.write(item.read())
+            logging.info(f"Generated image saved to: {filename}")
+
+        # Return the first generated image URL
         return output[0]
 
     except Exception as e:
@@ -93,7 +100,7 @@ def generate_story():
         logging.info("Story generated successfully.")
 
         # Generate an illustration for the story
-        illustration_prompt = f"An illustration for this story: {story_content[:15]}... in a children's storybook style."
+        illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
         illustration_url = generate_image(illustration_prompt)
         logging.info(f"Illustration URL: {illustration_url}")
 
