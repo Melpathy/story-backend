@@ -30,4 +30,4 @@ jobs:
 
       # Step 5: Run the test script
       - name: Run image generation test
-        run: python test_image_generation.py
+        run: python test_replicate_image.py
