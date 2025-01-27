@@ -33,24 +33,25 @@ def generate_image(prompt):
     Generate an image using Replicate's Stable Diffusion model.
     """
     # Full model version ID
-    model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe01863cbe77e4"
+    model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe81863cbe77e4"
 
     try:
-        # Call the Replicate API to generate the image
-        output = replicate_client.run(
-            model_version,
-            input={
-                "prompt": prompt,
-                "scheduler": "K_EULER"  # Optional field, included for stability
-            }
-        )
+        # Input parameters for Stable Diffusion
+        input_data = {
+            "prompt": prompt,
+            "scheduler": "K_EULER"  # Optional, based on documentation
+        }
 
-        logging.info("Image generated successfully.")
-        return output[0]  # Return the first generated image URL
+        # Call the Replicate API to create a prediction
+        output = replicate.run(model_version, input=input_data)
+
+        # Log and return the first generated image URL
+        logging.info(f"Image generated successfully: {output[0]}")
+        return output[0]
 
     except Exception as e:
-        logging.error(f"Error generating image: {str(e)}")
-        raise ValueError("Failed to generate illustration. API error: {str(e)}")
+        logging.error(f"Error generating image with Replicate API: {str(e)}")
+        raise ValueError(f"Failed to generate illustration. API error: {str(e)}")
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
