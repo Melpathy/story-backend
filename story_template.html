@@ -37,7 +37,7 @@
         }
 
         .illustration {
-            width: 100%;
+            width: 300px; /* Limit image width */
             height: auto;
             margin: 20px 0;
             border: 2px solid #ddd;
@@ -65,7 +65,7 @@
     <!-- Illustrations -->
     {% for illustration in illustrations %}
     <div class="page-break"></div>
-    <img src="{{ illustration_url }}" style="width: 300px; height: auto;" alt="Illustration">
+    <img src="{{ illustration }}" class="illustration" alt="Illustration">
     {% endfor %}
 </body>
 </html>
