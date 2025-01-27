@@ -4,6 +4,7 @@ from jinja2 import Template
 import os
 from io import BytesIO
 from openai import OpenAI
+import replicate
 
 app = Flask(__name__)
 
@@ -12,9 +13,31 @@ deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
 if not deepseek_api_key:
     raise ValueError("DeepSeek API key not found. Set the DEEPSEEK_API_KEY environment variable.")
 
+# Load the Replicate API key from environment variables
+replicate_api_key = os.getenv("REPLICATE_API_TOKEN")
+if not replicate_api_key:
+    raise ValueError("Replicate API key not found. Set the REPLICATE_API_TOKEN environment variable.")
+
 # Initialize the DeepSeek (OpenAI-compatible) client
 client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 
+# Initialize the Replicate client
+replicate_client = replicate.Client(api_token=replicate_api_key)
+
+def generate_image(prompt):
+    """
+    Generate an image using Replicate's Stable Diffusion model.
+    """
+    model = "stability-ai/stable-diffusion"
+    version = "latest"
+
+    # Call the Replicate API to generate the image
+    output = replicate_client.run(
+        f"{model}:{version}",
+        input={"prompt": prompt}
+    )
+
+    return output[0]  # Returns the image URL
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -54,15 +77,19 @@ def generate_story():
         # Extract the generated story
         story_content = response.choices[0].message.content
 
+        # Generate an illustration for the story
+        illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
+        illustration_url = generate_image(illustration_prompt)
+
         # Load the HTML template and populate it
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
-        
+
         rendered_html = template.render(
             title="A Personalized Story",
             author=child_name,
             content=story_content,
-            illustration_url="https://example.com/sample-illustration.jpg"  # Replace with actual illustration
+            illustrations=[illustration_url]  # Include the generated image URL
         )
 
         # Generate the PDF
