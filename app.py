@@ -12,6 +12,7 @@ if not deepseek_api_key:
 # Initialize the DeepSeek (OpenAI-compatible) client
 client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 
+
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
     data = request.get_json()
@@ -39,8 +40,18 @@ def generate_story():
             stream=False
         )
 
+        # Log the raw response for debugging
+        app.logger.info(f"DeepSeek API response: {response}")
+
+        # Safeguard: Ensure the response structure is as expected
+        if not hasattr(response, 'choices') or not response.choices:
+            raise ValueError("The DeepSeek API response does not contain 'choices'.")
+
+        if not hasattr(response.choices[0], 'message') or not hasattr(response.choices[0].message, 'content'):
+            raise ValueError("The DeepSeek API response does not contain 'message.content'.")
+
         # Extract the generated story
-        story = response.choices[0].message['content']
+        story = response.choices[0].message.content
 
         return jsonify({
             "status": "success",
@@ -48,6 +59,8 @@ def generate_story():
         })
 
     except Exception as e:
+        # Return a detailed error message for debugging
+        app.logger.error(f"Error during story generation: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
