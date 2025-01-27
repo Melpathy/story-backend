@@ -27,7 +27,7 @@ client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 
 # Initialize the Replicate client
 replicate_client = replicate.Client(api_token=replicate_api_key)
-
+ 
 def generate_image(prompt):
     """
     Generate an image using Replicate's Stable Diffusion 3 model.
