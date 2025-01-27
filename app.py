@@ -39,22 +39,13 @@ def generate_image(prompt):
         # Input parameters for Stable Diffusion
         input_data = {
             "prompt": prompt,
-            "width": 512,  # Reduce resolution
+            "width": 512,  # Reduce resolution to minimize memory usage
             "height": 512
-            # "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
         }
 
         # Call the Replicate API
         logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
-
-        # Uncomment below block to save image locally when memory allows
-        # Save and log each generated image
-        # for index, item in enumerate(output):
-        #     filename = f"output_{index}.webp"
-        #     with open(filename, "wb") as file:
-        #         file.write(item.read())
-        #     logging.info(f"Generated image saved to: {filename}")
 
         # Return the first generated image URL directly
         logging.info(f"Generated Image URL: {output[0]}")
@@ -119,7 +110,7 @@ def generate_story():
             illustrations=[illustration_url]  # Include the generated image URL
         )
 
-        # Generate the PDF
+        # Generate the PDF in memory
         pdf_buffer = BytesIO()
         HTML(string=rendered_html).write_pdf(pdf_buffer)
         pdf_buffer.seek(0)
