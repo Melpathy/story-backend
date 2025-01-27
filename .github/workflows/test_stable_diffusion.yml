@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-stable-diffusion:
-    runs-on: ubuntu-latest  # GitHub's cloud environment
+    runs-on: ubuntu-latest  # Use GitHub's cloud environment
 
     steps:
       # Step 1: Check out the repository
@@ -24,12 +24,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install replicate
 
-      # Step 4: Set environment variables
-      - name: Set Replicate API Key
-        env:
-          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+      # Step 4: Set Replicate API Key
+      - name: Set environment variable for API key
+        run: echo "REPLICATE_API_TOKEN=${{ secrets.REPLICATE_API_TOKEN }}" >> $GITHUB_ENV
 
       # Step 5: Run the test script
       - name: Run image generation test
-        run: |
-          python test_image_generation.py
+        run: python test_image_generation.py
