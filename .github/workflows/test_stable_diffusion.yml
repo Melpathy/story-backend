@@ -24,8 +24,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install replicate
 
-      # Step 4: Set Replicate API Key
-      - name: Set environment variable for API key
+      # Step 4: Set environment variables
+      - name: Set Replicate API Key
         run: echo "REPLICATE_API_TOKEN=${{ secrets.REPLICATE_API_TOKEN }}" >> $GITHUB_ENV
 
       # Step 5: Run the test script
