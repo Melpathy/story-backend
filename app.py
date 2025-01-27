@@ -39,23 +39,17 @@ def generate_image(prompt):
         # Input for the Stable Diffusion model
         input_data = {
             "prompt": prompt,
-            "aspect_ratio": "3:2"  # Optional input for aspect ratio
+            "width": 256,  # Reduce resolution
+            "height": 256  # Reduce resolution
         }
 
         # Call the Replicate API
         logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
 
-        # Save and log each generated image
-        filenames = []
-        for index, item in enumerate(output):
-            filename = f"output_{index}.webp"
-            with open(filename, "wb") as file:
-                file.write(item.read())
-            logging.info(f"Generated image saved to: {filename}")
-            filenames.append(filename)
-
-        return filenames  # Return filenames
+        # Return the first generated image URL directly
+        logging.info(f"Generated Image URL: {output[0]}")
+        return output[0]
 
     except Exception as e:
         logging.error(f"Error generating image: {str(e)}")
@@ -102,8 +96,8 @@ def generate_story():
 
         # Generate an illustration for the story
         illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
-        illustration_files = generate_image(illustration_prompt)
-        logging.info(f"Illustration files: {illustration_files}")
+        illustration_url = generate_image(illustration_prompt)
+        logging.info(f"Illustration URL: {illustration_url}")
 
         # Load the HTML template and populate it
         with open("story_template.html") as template_file:
@@ -113,7 +107,7 @@ def generate_story():
             title=f"A Personalized Story for {child_name}",
             author=child_name,
             content=story_content,
-            illustrations=illustration_files  # Include the generated image filenames
+            illustrations=[illustration_url]  # Include the generated image URL
         )
 
         # Generate the PDF in memory
