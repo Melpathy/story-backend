@@ -29,19 +29,37 @@ client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 replicate_client = replicate.Client(api_token=replicate_api_key)
 
 def generate_image(prompt):
+    """
+    Generate an image using Replicate's Stable Diffusion 3 model.
+    """
+    # Model version for Stable Diffusion
     model_version = "stability-ai/stable-diffusion-3"
+
     try:
+        # Input for the Stable Diffusion model
         input_data = {
             "prompt": prompt,
-            "width": 512,
-            "height": 512
+            "aspect_ratio": "3:2"  # Optional input for aspect ratio
         }
+
+        # Call the Replicate API
+        logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
-        logging.info(f"Generated Image URL: {output[0]}")
-        return output[0]
-    except replicate.exceptions.ReplicateError as e:
-        logging.error(f"Replicate API error: {e}")
-        raise ValueError(f"Failed to generate illustration. API error: {e}")
+
+        # Save and log each generated image
+        filenames = []
+        for index, item in enumerate(output):
+            filename = f"output_{index}.webp"
+            with open(filename, "wb") as file:
+                file.write(item.read())
+            logging.info(f"Generated image saved to: {filename}")
+            filenames.append(filename)
+
+        return filenames  # Return filenames
+
+    except Exception as e:
+        logging.error(f"Error generating image: {str(e)}")
+        raise ValueError(f"Failed to generate illustration. API error: {str(e)}")
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -83,10 +101,9 @@ def generate_story():
         logging.info("Story generated successfully.")
 
         # Generate an illustration for the story
-        # illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
-        illustration_prompt = "A magical forest, children's storybook style."
-        illustration_url = generate_image(illustration_prompt)
-        logging.info(f"Illustration URL: {illustration_url}")
+        illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
+        illustration_files = generate_image(illustration_prompt)
+        logging.info(f"Illustration files: {illustration_files}")
 
         # Load the HTML template and populate it
         with open("story_template.html") as template_file:
@@ -96,7 +113,7 @@ def generate_story():
             title=f"A Personalized Story for {child_name}",
             author=child_name,
             content=story_content,
-            illustrations=[illustration_url]  # Include the generated image URL
+            illustrations=illustration_files  # Include the generated image filenames
         )
 
         # Generate the PDF in memory
