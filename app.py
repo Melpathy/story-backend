@@ -1,6 +1,9 @@
-from flask import Flask, request, jsonify
-from openai import OpenAI
+from flask import Flask, request, jsonify, send_file
+from weasyprint import HTML
+from jinja2 import Template
 import os
+from io import BytesIO
+from openai import OpenAI
 
 app = Flask(__name__)
 
@@ -37,30 +40,45 @@ def generate_story():
                 {"role": "system", "content": "You are a creative story generator for children."},
                 {"role": "user", "content": prompt}
             ],
+            max_tokens=150,  # Limit tokens (about ~100 words)
             stream=False
         )
 
-        # Log the raw response for debugging
-        app.logger.info(f"DeepSeek API response: {response}")
-
-        # Safeguard: Ensure the response structure is as expected
+        # Safeguard for missing content
         if not hasattr(response, 'choices') or not response.choices:
             raise ValueError("The DeepSeek API response does not contain 'choices'.")
 
-        if not hasattr(response.choices[0], 'message') or not hasattr(response.choices[0].message, 'content'):
+        if not hasattr(response.choices[0].message, 'content'):
             raise ValueError("The DeepSeek API response does not contain 'message.content'.")
 
         # Extract the generated story
-        story = response.choices[0].message.content
+        story_content = response.choices[0].message.content
 
-        return jsonify({
-            "status": "success",
-            "story": story
-        })
+        # Load the HTML template and populate it
+        with open("story_template.html") as template_file:
+            template = Template(template_file.read())
+        
+        rendered_html = template.render(
+            title="A Personalized Story",
+            author=child_name,
+            content=story_content,
+            illustration_url="https://example.com/sample-illustration.jpg"  # Replace with actual illustration
+        )
+
+        # Generate the PDF
+        pdf_buffer = BytesIO()
+        HTML(string=rendered_html).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
+
+        # Send the generated PDF as a response
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"{child_name}_story.pdf"
+        )
 
     except Exception as e:
-        # Return a detailed error message for debugging
-        app.logger.error(f"Error during story generation: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
