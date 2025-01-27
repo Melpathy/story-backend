@@ -44,18 +44,20 @@ def generate_image(prompt):
             # "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
         }
 
-        # Call the Replicate API to create a prediction
+        # Call the Replicate API
         logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
 
+        # Uncomment below block to save image locally when memory allows
         # Save and log each generated image
-        for index, item in enumerate(output):
-            filename = f"output_{index}.webp"
-            with open(filename, "wb") as file:
-                file.write(item.read())
-            logging.info(f"Generated image saved to: {filename}")
+        # for index, item in enumerate(output):
+        #     filename = f"output_{index}.webp"
+        #     with open(filename, "wb") as file:
+        #         file.write(item.read())
+        #     logging.info(f"Generated image saved to: {filename}")
 
-        # Return the first generated image URL
+        # Return the first generated image URL directly
+        logging.info(f"Generated Image URL: {output[0]}")
         return output[0]
 
     except Exception as e:
