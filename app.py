@@ -41,7 +41,7 @@ def generate_image(prompt):
             "prompt": prompt,
             "width": 512,  # Reduce resolution
             "height": 512
-            "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
+            # "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
         }
 
         # Call the Replicate API to create a prediction
