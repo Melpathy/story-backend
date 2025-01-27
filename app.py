@@ -29,7 +29,7 @@ def generate_image(prompt):
     Generate an image using Replicate's Stable Diffusion model.
     """
     model = "stability-ai/stable-diffusion"
-    version = "latest"
+    version_id = "ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe01863cbe77e4"  # Verified version ID
 
     # Call the Replicate API to generate the image
     output = replicate_client.run(
