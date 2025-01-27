@@ -5,8 +5,12 @@ import os
 from io import BytesIO
 from openai import OpenAI
 import replicate
+import logging
 
 app = Flask(__name__)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Load the DeepSeek API key from environment variables
 deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
@@ -28,16 +32,25 @@ def generate_image(prompt):
     """
     Generate an image using Replicate's Stable Diffusion model.
     """
-    model = "stability-ai/stable-diffusion"
-    version_id = "ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe01863cbe77e4"  # Verified version ID
+    # Full model version ID
+    model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe01863cbe77e4"
 
-    # Call the Replicate API to generate the image
-    output = replicate_client.run(
-        f"{model}:{version_id}",
-        input={"prompt": prompt}
-    )
+    try:
+        # Call the Replicate API to generate the image
+        output = replicate_client.run(
+            model_version,
+            input={
+                "prompt": prompt,
+                "scheduler": "K_EULER"  # Optional field, included for stability
+            }
+        )
 
-    return output[0]  # Returns the image URL
+        logging.info("Image generated successfully.")
+        return output[0]  # Return the first generated image URL
+
+    except Exception as e:
+        logging.error(f"Error generating image: {str(e)}")
+        raise ValueError("Failed to generate illustration. Please try again.")
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -76,17 +89,19 @@ def generate_story():
 
         # Extract the generated story
         story_content = response.choices[0].message.content
+        logging.info("Story generated successfully.")
 
         # Generate an illustration for the story
         illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
         illustration_url = generate_image(illustration_prompt)
+        logging.info(f"Illustration URL: {illustration_url}")
 
         # Load the HTML template and populate it
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
 
         rendered_html = template.render(
-            title="A Personalized Story",
+            title=f"A Personalized Story for {child_name}",
             author=child_name,
             content=story_content,
             illustrations=[illustration_url]  # Include the generated image URL
@@ -106,6 +121,7 @@ def generate_story():
         )
 
     except Exception as e:
+        logging.error(f"Error in generate_story: {str(e)}")
         return jsonify({
             "status": "error",
             "message": str(e)
