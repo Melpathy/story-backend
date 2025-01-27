@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.5;
+            margin: 1in;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .illustration {
+            width: 100%;
+            height: auto;
+            margin: 20px 0;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <h2>By {{ author }}</h2>
+    <div class="content">
+        {{ content }}
+    </div>
+    <div class="page-break"></div>
+    <h2>Illustration</h2>
+    <img src="{{ illustration_url }}" class="illustration" alt="Illustration">
+</body>
+</html>
