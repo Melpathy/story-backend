@@ -83,7 +83,8 @@ def generate_story():
         logging.info("Story generated successfully.")
 
         # Generate an illustration for the story
-        illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
+        # illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
+        illustration_prompt = "A magical forest, children's storybook style."
         illustration_url = generate_image(illustration_prompt)
         logging.info(f"Illustration URL: {illustration_url}")
 
