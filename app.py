@@ -33,7 +33,7 @@ def generate_image(prompt):
 
     # Call the Replicate API to generate the image
     output = replicate_client.run(
-        f"{model}:{version}",
+        f"{model}:{version_id}",
         input={"prompt": prompt}
     )
 
