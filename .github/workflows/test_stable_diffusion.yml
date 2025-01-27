@@ -31,3 +31,5 @@ jobs:
       # Step 5: Run the test script
       - name: Run image generation test
         run: python test_image_generation.py
+        
+ # Fix GitHub Actions workflow
