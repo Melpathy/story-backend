@@ -40,7 +40,7 @@ def generate_story():
         )
 
         # Extract the generated story
-        story = response['choices'][0]['message']['content']
+        story = response.choices[0].message['content']
 
         return jsonify({
             "status": "success",
