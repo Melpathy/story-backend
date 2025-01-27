@@ -50,7 +50,7 @@ def generate_image(prompt):
 
     except Exception as e:
         logging.error(f"Error generating image: {str(e)}")
-        raise ValueError("Failed to generate illustration. Please try again.")
+        raise ValueError("Failed to generate illustration. API error: {str(e)}")
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -92,7 +92,7 @@ def generate_story():
         logging.info("Story generated successfully.")
 
         # Generate an illustration for the story
-        illustration_prompt = f"An illustration for this story: {story_content[:50]}... in a children's storybook style."
+        illustration_prompt = f"An illustration for this story: {story_content[:15]}... in a children's storybook style."
         illustration_url = generate_image(illustration_prompt)
         logging.info(f"Illustration URL: {illustration_url}")
 
