@@ -29,31 +29,19 @@ client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 replicate_client = replicate.Client(api_token=replicate_api_key)
 
 def generate_image(prompt):
-    """
-    Generate an image using Replicate's Stable Diffusion 3 model.
-    """
-    # Model identifier for Stable Diffusion 3
     model_version = "stability-ai/stable-diffusion-3"
-
     try:
-        # Input parameters for Stable Diffusion
         input_data = {
             "prompt": prompt,
-            "width": 512,  # Reduce resolution to minimize memory usage
+            "width": 512,
             "height": 512
         }
-
-        # Call the Replicate API
-        logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
-
-        # Return the first generated image URL directly
         logging.info(f"Generated Image URL: {output[0]}")
         return output[0]
-
-    except Exception as e:
-        logging.error(f"Error generating image with Replicate API: {str(e)}")
-        raise ValueError(f"Failed to generate illustration. API error: {str(e)}")
+    except replicate.exceptions.ReplicateError as e:
+        logging.error(f"Replicate API error: {e}")
+        raise ValueError(f"Failed to generate illustration. API error: {e}")
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
