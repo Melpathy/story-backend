@@ -39,6 +39,8 @@ def generate_image(prompt):
         # Input parameters for Stable Diffusion
         input_data = {
             "prompt": prompt,
+            "width": 512,  # Reduce resolution
+            "height": 512
             "aspect_ratio": "3:2"  # Optional parameter for aspect ratio
         }
 
