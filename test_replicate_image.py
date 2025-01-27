@@ -1,6 +1,10 @@
 import replicate
 import os
 import ssl
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Initialize the Replicate client
 replicate_api_key = os.getenv("REPLICATE_API_TOKEN")
@@ -21,25 +25,31 @@ def test_image_generation(prompt):
         # Disable SSL verification
         ssl._create_default_https_context = ssl._create_unverified_context
 
-        # Model version from Replicate documentation
-        model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff76822a1affe81863cbe77e4"
+        # Model version for Stable Diffusion
+        model_version = "stability-ai/stable-diffusion-3"  # Updated to Stable Diffusion 3
 
         # Input for the Stable Diffusion model
         input_data = {
             "prompt": prompt,
-            "scheduler": "K_EULER"
+            "aspect_ratio": "3:2"  # Added optional input for aspect ratio
         }
 
         # Call the Replicate API
+        logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
         output = client.run(model_version, input=input_data)
 
-        # Print the generated image URL
-        print(f"Generated Image URL: {output[0]}")
-        return output[0]
+        # Save and log each generated image
+        for index, item in enumerate(output):
+            filename = f"output_{index}.webp"
+            with open(filename, "wb") as file:
+                file.write(item.read())
+            logging.info(f"Generated image saved to: {filename}")
+
+        return [f"output_{index}.webp" for index in range(len(output))]  # Return filenames
 
     except Exception as e:
-        print(f"Error generating image: {str(e)}")
-        return None
+        logging.error(f"Error generating image: {str(e)}")
+        raise ValueError(f"Failed to generate illustration. API error: {str(e)}")
 
     finally:
         # Restore the original SSL context
@@ -50,4 +60,8 @@ if __name__ == "__main__":
     # Prompt to test the API
     prompt = "A magical forest with glowing trees, children's storybook style."
     print("Testing image generation...")
-    test_image_generation(prompt)
+    try:
+        generated_files = test_image_generation(prompt)
+        print(f"Generated files: {generated_files}")
+    except Exception as e:
+        print(f"Final Error: {e}")
