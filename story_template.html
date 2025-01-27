@@ -24,58 +24,48 @@
         h2 {
             font-size: 1.5em;
             margin-bottom: 30px;
-            color: #333; /* Neutral dark for subtitle */
+            color: #333;
         }
 
-        .title-page {
+        .cover-page {
             text-align: center;
-            margin-top: 3in; /* Center content vertically on the page */
+            margin-top: 3in;
         }
 
         .content {
             margin-top: 50px;
         }
 
-        /* Illustration Styles */
         .illustration {
             width: 100%;
             height: auto;
             margin: 20px 0;
-            border: 2px solid #ddd; /* Light border for images */
+            border: 2px solid #ddd;
             padding: 5px;
         }
 
-        .placeholder {
-            text-align: center;
-            font-style: italic;
-            color: #999; /* Grey for placeholders */
-            margin: 20px 0;
-        }
-
-        /* Page Break for New Sections */
         .page-break {
             page-break-before: always;
         }
     </style>
 </head>
 <body>
-    <!-- Title Page -->
-    <div class="title-page">
+    <!-- Cover Page -->
+    <div class="cover-page">
         <h1>{{ title }}</h1>
         <h2>By {{ author }}</h2>
     </div>
 
     <!-- Story Content -->
+    <div class="page-break"></div>
     <div class="content">
         {{ content }}
     </div>
 
-    <!-- Illustration Section -->
+    <!-- Illustrations -->
+    {% for illustration in illustrations %}
     <div class="page-break"></div>
-    <h2>Illustration</h2>
-    <div class="placeholder">
-        Illustration Coming Soon!
-    </div>
-    <img src="{{ illustration_url }}" class="illustration" alt="Illustration">
+    <img src="{{ illustration }}" class="illustration" alt="Illustration">
+    {% endfor %}
 </body>
 </html>
