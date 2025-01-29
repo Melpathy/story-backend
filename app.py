@@ -72,8 +72,8 @@ def generate_image(prompt):
     try:
         input_data = {
             "prompt": prompt,
-            "width": 128,  # Lower resolution for memory optimization
-            "height": 128
+            "width": 256,  # Lower resolution for memory optimization
+            "height": 256
         }
 
         logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
