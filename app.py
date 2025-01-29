@@ -45,7 +45,7 @@ def generate_story_mistral(prompt):
         url = "https://openrouter.ai/api/v1/chat/completions"  # OpenRouter endpoint
         headers = {"Authorization": f"Bearer {API_KEYS['mistral']}", "Content-Type": "application/json"}
         payload = {
-            "model": "mistral-7b-instruct",
+            "model": "open-mistral-7b",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 75  # Optimize for cost & memory
         }
