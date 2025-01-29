@@ -65,6 +65,34 @@ def generate_image(prompt):
         logging.error(f"❌ Error generating image: {str(e)}")
         return None  # Return None instead of crashing
 
+def generate_story_mistral(prompt):
+    """Generate a story using Mistral API."""
+    try:
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {API_KEYS['mistral'].strip()}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "mistral-medium",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 200
+        }
+
+        logging.info("📡 Calling Mistral API for story generation...")
+        response = requests.post(url, json=payload, headers=headers)
+        response_json = response.json()
+
+        if "choices" in response_json and response_json["choices"]:
+            return response_json["choices"][0]["message"]["content"]
+        else:
+            logging.error(f"❌ Mistral API Error: {response_json}")
+            return "Error generating story."
+
+    except Exception as e:
+        logging.error(f"❌ Error calling Mistral API: {str(e)}")
+        return "Error generating story."
+
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -86,7 +114,7 @@ def generate_story():
         log_memory_usage("Before Mistral API")
 
         # ✅ Call Mistral API (Story Generation)
-        story_content = generate_story(prompt)
+        story_content = generate_story_mistral(prompt)
 
         log_memory_usage("After Mistral API")
 
