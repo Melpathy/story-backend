@@ -38,11 +38,12 @@ def log_memory_usage(stage):
     mem_info = process.memory_info()
     logging.info(f"[{stage}] Memory Usage: {mem_info.rss / (1024 * 1024):.2f} MB")  # Convert bytes to MB
 
-
 def generate_image(prompt):
     """Generate an image using Replicate's Stable Diffusion 3 model."""
-# model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
-model_version = "stability-ai/stable-diffusion-3"
+    
+    # Uncomment the model you want to use
+    # model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
+    model_version = "stability-ai/stable-diffusion-3"  # Default model
 
     try:
         input_data = {
@@ -51,43 +52,17 @@ model_version = "stability-ai/stable-diffusion-3"
             "height": 256
         }
 
-        logging.info("Calling Mistral API for story generation...")
-        response = requests.post(url, json=payload, headers=headers)
-        response_json = response.json()
-
-        if "choices" in response_json and response_json["choices"]:
-            return response_json["choices"][0]["message"]["content"]
-        else:
-            logging.error(f"Mistral API Error: {response_json}")
-            return "Error generating story."
-
-    except Exception as e:
-        logging.error(f"Error calling Mistral API: {str(e)}")
-        return "Error generating story."
-
-
-def generate_image(prompt):
-    """Generate an image using Replicate's Stable Diffusion 3 model."""
- # model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
- model_version = "stability-ai/stable-diffusion-3"
-    try:
-        input_data = {
-            "prompt": prompt,
-            "width": 256,  # Lower resolution for memory optimization
-            "height": 256
-        }
-
-        logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
+        logging.info(f"📡 Calling Stable Diffusion with prompt: {prompt}")
         output = replicate_client.run(model_version, input=input_data)
 
         if not output or len(output) == 0:
-            raise ValueError("Replicate API did not return a valid image URL.")
+            raise ValueError("❌ Replicate API did not return a valid image URL.")
 
-        logging.info(f"Generated Image URL: {output[0]}")
+        logging.info(f"✅ Generated Image URL: {output[0]}")
         return output[0]
 
     except Exception as e:
-        logging.error(f"Error generating image: {str(e)}")
+        logging.error(f"❌ Error generating image: {str(e)}")
         return None  # Return None instead of crashing
 
 
