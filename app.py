@@ -39,15 +39,16 @@ def log_memory_usage(stage):
     logging.info(f"[{stage}] Memory Usage: {mem_info.rss / (1024 * 1024):.2f} MB")  # Convert bytes to MB
 
 
-def generate_story_mistral(prompt):
-    """Generate a story using Mistral API (via OpenRouter)."""
+def generate_image(prompt):
+    """Generate an image using Replicate's Stable Diffusion 3 model."""
+    # model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
+    model_version = "stability-ai/stable-diffusion-3"
+
     try:
-        url = "https://api.mistral.ai/v1/chat/completions"  # Correct Mistral API
-        headers = {"Authorization": f"Bearer {API_KEYS['mistral'].strip()}", "Content-Type": "application/json"}
-        payload = {
-            "model": "mistral-medium",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200  # Optimize for cost & memory
+        input_data = {
+            "prompt": prompt,
+            "width": 256,  # Lower resolution for memory optimization
+            "height": 256
         }
 
         logging.info("Calling Mistral API for story generation...")
@@ -67,8 +68,8 @@ def generate_story_mistral(prompt):
 
 def generate_image(prompt):
     """Generate an image using Replicate's Stable Diffusion 3 model."""
-    # model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
-      model_version = "stability-ai/stable-diffusion-3"
+ # model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
+ model_version = "stability-ai/stable-diffusion-3"
     try:
         input_data = {
             "prompt": prompt,
