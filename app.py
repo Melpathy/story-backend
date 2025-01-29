@@ -42,10 +42,10 @@ def log_memory_usage(stage):
 def generate_story_mistral(prompt):
     """Generate a story using Mistral API (via OpenRouter)."""
     try:
-        url = "https://openrouter.ai/api/v1/chat/completions"  # OpenRouter endpoint
-        headers = {"Authorization": f"Bearer {API_KEYS['mistral']}", "Content-Type": "application/json"}
+        url = "https://api.mistral.ai/v1/chat/completions"  # Correct Mistral API
+        headers = {"Authorization": f"Bearer {API_KEYS['mistral'].strip()}", "Content-Type": "application/json"}
         payload = {
-            "model": "open-mistral-7b",
+            "model": "mistral-medium",
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 75  # Optimize for cost & memory
         }
