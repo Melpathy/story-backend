@@ -9,7 +9,7 @@ import replicate
 import logging
 import psutil
 import gc  # For memory cleanup
-
+ 
 app = Flask(__name__)
 
 # Set up logging
