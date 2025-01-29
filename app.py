@@ -4,32 +4,32 @@ from jinja2 import Template
 import os
 import tempfile  # Use temporary files instead of keeping data in memory
 from io import BytesIO
-from openai import OpenAI
+import requests  # For calling external APIs
 import replicate
 import logging
 import psutil
 import gc  # For memory cleanup
- 
+
 app = Flask(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Load the DeepSeek API key from environment variables
-deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-if not deepseek_api_key:
-    raise ValueError("DeepSeek API key not found. Set the DEEPSEEK_API_KEY environment variable.")
+# ✅ Centralized API Keys (Easy to Switch APIs)
+API_KEYS = {
+    "mistral": os.getenv("MISTRAL_API_KEY"),
+    "replicate": os.getenv("REPLICATE_API_TOKEN")
+}
 
-# Load the Replicate API key from environment variables
-replicate_api_key = os.getenv("REPLICATE_API_TOKEN")
-if not replicate_api_key:
-    raise ValueError("Replicate API key not found. Set the REPLICATE_API_TOKEN environment variable.")
+# Validate API Keys
+if not API_KEYS["mistral"]:
+    raise ValueError("Mistral API key not found. Set MISTRAL_API_KEY in environment variables.")
 
-# Initialize the DeepSeek (OpenAI-compatible) client
-client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
+if not API_KEYS["replicate"]:
+    raise ValueError("Replicate API key not found. Set REPLICATE_API_TOKEN in environment variables.")
 
-# Initialize the Replicate client
-replicate_client = replicate.Client(api_token=replicate_api_key)
+# Initialize Replicate client
+replicate_client = replicate.Client(api_token=API_KEYS["replicate"])
 
 
 def log_memory_usage(stage):
@@ -39,16 +39,41 @@ def log_memory_usage(stage):
     logging.info(f"[{stage}] Memory Usage: {mem_info.rss / (1024 * 1024):.2f} MB")  # Convert bytes to MB
 
 
+def generate_story_mistral(prompt):
+    """Generate a story using Mistral API (via OpenRouter)."""
+    try:
+        url = "https://openrouter.ai/api/v1/chat/completions"  # OpenRouter endpoint
+        headers = {"Authorization": f"Bearer {API_KEYS['mistral']}", "Content-Type": "application/json"}
+        payload = {
+            "model": "mistral-7b-instruct",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 75  # Optimize for cost & memory
+        }
+
+        logging.info("Calling Mistral API for story generation...")
+        response = requests.post(url, json=payload, headers=headers)
+        response_json = response.json()
+
+        if "choices" in response_json and response_json["choices"]:
+            return response_json["choices"][0]["message"]["content"]
+        else:
+            logging.error(f"Mistral API Error: {response_json}")
+            return "Error generating story."
+
+    except Exception as e:
+        logging.error(f"Error calling Mistral API: {str(e)}")
+        return "Error generating story."
+
+
 def generate_image(prompt):
     """Generate an image using Replicate's Stable Diffusion 3 model."""
     model_version = "stability-ai/stable-diffusion-3"
 
     try:
-        # Reduce image size for memory optimization
         input_data = {
             "prompt": prompt,
-            "width": 128,  # Reduce from 256
-            "height": 128  # Reduce from 256
+            "width": 128,  # Lower resolution for memory optimization
+            "height": 128
         }
 
         logging.info(f"Calling Stable Diffusion with prompt: {prompt}")
@@ -82,28 +107,16 @@ def generate_story():
                   f"The story should teach the moral lesson: {moral_lesson}. "
                   f"Make it fun, engaging, and child-appropriate.")
 
-        log_memory_usage("Before DeepSeek API")
+        log_memory_usage("Before Mistral API")
 
-        # Call the DeepSeek API (Story Generation)
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": "You are a creative story generator for children."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=75,  # Reduce from 100 to 75 to lower memory usage
-            stream=False
-        )
+        # ✅ Call Mistral API (Story Generation)
+        story_content = generate_story_mistral(prompt)
 
-        log_memory_usage("After DeepSeek API")
+        log_memory_usage("After Mistral API")
 
-        if not response.choices or not hasattr(response.choices[0].message, 'content'):
-            raise ValueError("DeepSeek API did not return valid story content.")
-
-        story_content = response.choices[0].message.content
         logging.info("Story generated successfully.")
 
-        # Generate illustration
+        # ✅ Generate illustration
         illustration_prompt = f"A children's storybook illustration for: {story_content[:50]}..."
         logging.info("Calling Replicate API for image generation...")
 
@@ -116,7 +129,7 @@ def generate_story():
 
         logging.info(f"Illustration URL: {illustration_url}")
 
-        # Load and render HTML template
+        # ✅ Load and render HTML template
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
 
@@ -130,14 +143,14 @@ def generate_story():
         logging.info("Rendering PDF with WeasyPrint...")
         log_memory_usage("Before PDF Generation")
 
-        # Generate PDF using a temporary file (reduces memory pressure)
+        # ✅ Generate PDF using a temporary file (reduces memory pressure)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
             HTML(string=rendered_html).write_pdf(temp_pdf.name)
             temp_pdf_path = temp_pdf.name
 
         log_memory_usage("After PDF Generation")
 
-        # Send the generated PDF as a response
+        # ✅ Send the generated PDF as a response
         response = send_file(
             temp_pdf_path,
             mimetype='application/pdf',
@@ -145,7 +158,7 @@ def generate_story():
             download_name=f"{child_name}_story.pdf"
         )
 
-        # Clean up memory-heavy variables
+        # ✅ Clean up memory-heavy variables
         del story_content, illustration_url, rendered_html
         gc.collect()
         log_memory_usage("After Request Cleanup")
