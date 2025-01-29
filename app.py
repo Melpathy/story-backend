@@ -86,7 +86,7 @@ def generate_story():
         log_memory_usage("Before Mistral API")
 
         # ✅ Call Mistral API (Story Generation)
-        story_content = generate_story_mistral(prompt)
+        story_content = generate_story(prompt)
 
         log_memory_usage("After Mistral API")
 
