@@ -47,7 +47,7 @@ def generate_story_mistral(prompt):
         payload = {
             "model": "mistral-medium",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 150  # Optimize for cost & memory
+            "max_tokens": 200  # Optimize for cost & memory
         }
 
         logging.info("Calling Mistral API for story generation...")
@@ -117,7 +117,7 @@ def generate_story():
         logging.info("Story generated successfully.")
 
         # ✅ Generate illustration
-        illustration_prompt = f"A children's storybook illustration for: {story_content[:150]}..."
+        illustration_prompt = f"A children's storybook illustration for: {story_content[:100]}..."
         logging.info("Calling Replicate API for image generation...")
 
         log_memory_usage("Before Replicate API")
