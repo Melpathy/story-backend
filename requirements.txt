@@ -4,3 +4,4 @@ openai
 weasyprint
 replicate
 psutil
+requests
