@@ -67,7 +67,7 @@ def generate_story_mistral(prompt):
 
 def generate_image(prompt):
     """Generate an image using Replicate's Stable Diffusion 3 model."""
-    model_version = "stability-ai/stable-diffusion-3"
+    model_version = "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
 
     try:
         input_data = {
