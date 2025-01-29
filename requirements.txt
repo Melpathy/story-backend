@@ -5,3 +5,4 @@ weasyprint
 replicate
 psutil
 requests
+mistralai
