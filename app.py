@@ -158,24 +158,16 @@ def generate_story():
         # ✅ Generate PDF using a temporary file (reduces memory pressure)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
             HTML(string=rendered_html).write_pdf(temp_pdf.name)
-            temp_pdf_path = temp_pdf.name
+            pdf_filename = os.path.basename(temp_pdf.name)
+            pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"  # URL to access the PDF
 
         log_memory_usage("After PDF Generation")
 
-        # ✅ Send the generated PDF as a response
-        response = send_file(
-            temp_pdf_path,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f"{child_name}_story.pdf"
-        )
-
-        # ✅ Clean up memory-heavy variables
-        del story_content, illustration_url, rendered_html
-        gc.collect()
-        log_memory_usage("After Request Cleanup")
-
-        return response
+        return jsonify({
+            "status": "success",
+            "message": "Story generated successfully!",
+            "pdf_url": pdf_url
+        })
 
     except MemoryError:
         logging.error("Memory limit exceeded! Consider reducing API responses or upgrading memory.")
@@ -187,3 +179,17 @@ def generate_story():
 
     finally:
         gc.collect()
+        log_memory_usage("After Request Cleanup")
+
+
+# ✅ Add the new download route BELOW the generate-story function
+@app.route('/download/<filename>')
+def download_file(filename):
+    """Serves the generated PDF for download."""
+    pdf_path = f"/tmp/{filename}"  # Ensure this matches your PDF storage path
+    return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
+
+
+# ✅ Ensure this runs at the bottom of your script (if applicable)
+if __name__ == "__main__":
+    app.run(debug=True)
