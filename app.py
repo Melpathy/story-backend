@@ -14,7 +14,11 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-CORS(app, origins=["https://mels-story-site.webflow.io"])
+# Allow both Webflow domains
+CORS(app, origins=[
+    "https://mels-story-site.design.webflow.io",
+    "https://webflow.com"
+])
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
