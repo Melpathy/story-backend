@@ -6,3 +6,4 @@ replicate
 psutil
 requests
 mistralai
+flask-cors
