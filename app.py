@@ -9,8 +9,12 @@ import replicate
 import logging
 import psutil
 import gc  # For memory cleanup
- 
+from flask import Flask
+from flask_cors import CORS
+
 app = Flask(__name__)
+
+CORS(app, origins=["https://mels-story-site.webflow.io"])
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
