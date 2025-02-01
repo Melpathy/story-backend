@@ -87,11 +87,15 @@ def generate_story_mistral(prompt):
             return response_json["choices"][0]["message"]["content"]
         else:
             logging.error(f"❌ Mistral API Error: {response_json}")
-            return "Error generating story."
+            return f"Error generating story. API Response: {response_json}"
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"❌ Mistral API Request Error: {str(e)}")
+        return f"Error generating story. Exception: {str(e)}"
 
     except Exception as e:
-        logging.error(f"❌ Error calling Mistral API: {str(e)}")
-        return "Error generating story."
+        logging.error(f"❌ Unknown Error in Mistral API: {str(e)}")
+        return f"Error generating story. Exception: {str(e)}"
 
 
 @app.route('/api/generate-story', methods=['POST'])
