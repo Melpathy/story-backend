@@ -111,12 +111,12 @@ def generate_story():
         logging.info(f"Received Data: {data}")  # Debugging
 
         # ✅ Extract Fields (Using default values for missing fields)
-        child_name = data.get('child-name', 'child')
-        age = data.get('child-age', 7)
+        child_name = data.get('childName', 'child')
+        age = data.get('age', 7)
         character_type = data.get('character-type', 'Boy')
         custom_character = data.get('custom-character', None)
         interests = data.get('interests', 'adventures')
-        moral_lesson = data.get('moral-lesson', 'kindness')
+        moral_lesson = data.get('moralLesson', 'kindness')
         toggle_customization = data.get('toggle-customization', 'No')
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
