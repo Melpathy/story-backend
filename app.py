@@ -167,6 +167,9 @@ def generate_story():
             prompt += f" The story should be written in {custom_language}."
 
         log_memory_usage("Before Mistral API")
+        
+        # ✅ Log the prompt in the console
+        logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
         # ✅ Call Mistral API (Story Generation)
         story_content = generate_story_mistral(prompt)
