@@ -106,18 +106,65 @@ def generate_story_mistral(prompt):
 def generate_story():
     """Handles the story and PDF generation request."""
     try:
-        # Get request data
+        # ✅ Get request data
         data = request.get_json()
-        child_name = data.get('childName', 'child')
-        age = data.get('age', 7)
-        interests = data.get('interests', 'adventures')
-        moral_lesson = data.get('moralLesson', 'kindness')
+        logging.info(f"Received Data: {data}")  # Debugging
 
-        # Construct the prompt
-        prompt = (f"Write a short children's story for a {age}-year-old named {child_name}. "
-                  f"The story should include their interests: {interests}. "
-                  f"The story should teach the moral lesson: {moral_lesson}. "
-                  f"Make it fun, engaging, and child-appropriate.")
+        # ✅ Extract Fields (Using default values for missing fields)
+        child_name = data.get('child-name', 'child')
+        age = data.get('child-age', 7)
+        character_type = data.get('character-type', 'Boy')
+        custom_character = data.get('custom-character', None)
+        interests = data.get('interests', 'adventures')
+        moral_lesson = data.get('moral-lesson', 'kindness')
+        toggle_customization = data.get('toggle-customization', 'No')
+        story_genre = data.get('story-genre', 'Fantasy')
+        story_tone = data.get('story-tone', 'Lighthearted')
+        surprise_ending = data.get('surprise-ending', False)
+        story_language = data.get('story-language', 'English')
+        custom_language = data.get('custom-language', None)
+        bilingual_mode = data.get('bilingual-mode', False)
+        bilingual_language = data.get('bilingual-language', 'English')
+        custom_bilingual_language = data.get('custom-bilingual-language', None)
+        best_friend = data.get('best-friend', None)
+        pet_name = data.get('pet-name', None)
+
+        # ✅ Build the Story Prompt
+        prompt = (
+            f"Write a children's story for a {age}-year-old named {child_name}. "
+            f"The main character is a {character_type.lower()}."
+        )
+
+        if custom_character:
+            prompt += f" The character is specifically described as: {custom_character}."
+
+        if interests:
+            prompt += f" The story should include their interests: {interests}."
+
+        prompt += f" The story should teach the moral lesson of {moral_lesson}."
+
+        if toggle_customization.lower() == "yes":
+            prompt += f" The genre is {story_genre} with a {story_tone} tone."
+
+        if surprise_ending:
+            prompt += " The story should include a surprise ending."
+
+        if best_friend:
+            prompt += f" The character's best friend, {best_friend}, is part of the adventure."
+
+        if pet_name:
+            prompt += f" Their pet, {pet_name}, plays an important role in the story."
+
+        # ✅ Handle Bilingual Mode
+        if bilingual_mode:
+            if bilingual_language.lower() == "other bilingual language" and custom_bilingual_language:
+                prompt += f" The story should be written in both English and {custom_bilingual_language}."
+            else:
+                prompt += f" The story should be written in both English and {bilingual_language}."
+
+        # ✅ Handle Custom Story Language
+        if story_language.lower() == "other-language" and custom_language:
+            prompt += f" The story should be written in {custom_language}."
 
         log_memory_usage("Before Mistral API")
 
@@ -180,6 +227,7 @@ def generate_story():
     finally:
         gc.collect()
         log_memory_usage("After Request Cleanup")
+
 
 
 # ✅ Add the new download route BELOW the generate-story function
