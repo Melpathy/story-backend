@@ -83,7 +83,7 @@ def generate_story_mistral(prompt):
                 {"role": "system", "content": "You are an expert children's story writer. Create engaging, age-appropriate, and bilingual stories."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 500
+            "max_tokens": 200
         }
 
         logging.info("📡 Calling Mistral API for story generation...")
