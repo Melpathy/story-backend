@@ -80,7 +80,7 @@ def generate_story_mistral(prompt):
         payload = {
             "model": "mistral-medium",
             "messages": [
-                {"role": "system", "content": "You are an expert children's story writer. Create a complete, engaging, and age-appropriate story within the specified token limit."},
+                {"role": "system", "content": "You are an expert children's story writer. Create a complete, engaging, and age-appropriate story within the specified token limit. Ensure it is engaging, structured, and flows well."},
                 {"role": "user", "content": prompt}
             ],
             "max_tokens": 200,
