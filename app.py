@@ -144,10 +144,11 @@ def generate_image_per_section(sections):
     """Generates an image for each section's summary."""
     illustrations = []
     for section in sections:
-        illustration_prompt = f"Children's storybook illustration based on: {section['summary']}"
+        illustration_prompt = f"Children's storybook illustration for: {section['summary']}" if section['summary'] else "Illustrate this story section."
         image_url = generate_image(illustration_prompt)
         illustrations.append(image_url if image_url else "https://example.com/default_image.jpg")  # Fallback
     return illustrations
+
 
 
 @app.route('/api/generate-story', methods=['POST'])
