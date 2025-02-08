@@ -11,6 +11,7 @@ import psutil
 import gc  # For memory cleanup
 from flask import Flask
 from flask_cors import CORS
+import re
 
 app = Flask(__name__)
 
@@ -69,23 +70,31 @@ def generate_image(prompt):
         logging.error(f"❌ Error generating image: {str(e)}")
         return None  # Return None instead of crashing
 
-def generate_story_mistral(prompt):
-    """Generate a story using Mistral API."""
+def generate_story_mistral(prompt, max_tokens=800):
+    """Generate a story using Mistral API with structured sections."""
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {API_KEYS['mistral'].strip()}",
             "Content-Type": "application/json"
         }
+
+        # Modify prompt to ensure structured output
+        prompt += """
+        Format the story with clearly labeled sections. 
+        Use 'SECTION 1:', 'SECTION 2:', etc. to separate the parts.
+        Each section should be approximately equal in length.
+        """
+
         payload = {
             "model": "mistral-medium",
             "messages": [
-                {"role": "system", "content": "You are an expert children's story writer. Create a complete, engaging, and age-appropriate story within the specified token limit. Ensure it is engaging, structured, and flows well."},
+                {"role": "system", "content": "You are an expert children's story writer. Generate a complete, structured story divided into sections. Each section should be clearly labeled."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 200,
-            "temperature": 0.7,  # Keep responses structured but still creative
-            "top_p": 0.9         # Avoid too much randomness
+            "max_tokens": max_tokens,
+            "temperature": 0.7,
+            "top_p": 0.9
         }
 
         logging.info("📡 Calling Mistral API for story generation...")
@@ -105,6 +114,40 @@ def generate_story_mistral(prompt):
     except Exception as e:
         logging.error(f"❌ Unknown Error in Mistral API: {str(e)}")
         return f"Error generating story. Exception: {str(e)}"
+
+
+def split_story_into_sections(story_text):
+    """Parses the generated story into structured sections."""
+    sections = []
+    # Improved regex: Handles variations like "Section 1:", "SECTION 1", or "section one"
+    section_pattern = re.compile(r"(SECTION\s*\d+[:.]?)", re.IGNORECASE)
+    parts = section_pattern.split(story_text)[1:]  
+
+    for i in range(0, len(parts), 2):
+        section_title = parts[i].strip().replace(":", "")
+        section_content = parts[i + 1].strip() if i + 1 < len(parts) else ""
+
+        # Generate a short summary for illustrations
+        summary_prompt = f"Summarize this section in 2-3 sentences for an illustration: {section_content}"
+        summary = generate_story_mistral(summary_prompt, max_tokens=50)
+
+        sections.append({
+            "title": section_title,
+            "content": section_content,
+            "summary": summary
+        })
+
+    return sections
+
+
+def generate_image_per_section(sections):
+    """Generates an image for each section's summary."""
+    illustrations = []
+    for section in sections:
+        illustration_prompt = f"Children's storybook illustration based on: {section['summary']}"
+        image_url = generate_image(illustration_prompt)
+        illustrations.append(image_url if image_url else "https://example.com/default_image.jpg")  # Fallback
+    return illustrations
 
 
 @app.route('/api/generate-story', methods=['POST'])
@@ -148,7 +191,7 @@ def generate_story():
 
         prompt += f" The story should teach the moral lesson of {moral_lesson}."
 
-        if toggle_customization.lower() == "yes":
+        if toggle_customization: == "yes":
             prompt += f" The genre is {story_genre} with a {story_tone} tone."
 
         if surprise_ending:
@@ -177,35 +220,30 @@ def generate_story():
         # ✅ Log the prompt in the console
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
-        # ✅ Call Mistral API (Story Generation)
-        story_content = generate_story_mistral(prompt)
+        # ✅ Generate the Full Story
+        full_story = generate_story_mistral(prompt, max_tokens=800)
+        logging.info("Story generated successfully.")
+
+        # ✅ Split into Sections
+        sections = split_story_into_sections(full_story)
+        logging.info(f"Story split into {len(sections)} sections.")
+
+        # ✅ Generate Images for Each Section
+        illustrations = generate_image_per_section(sections)
 
         log_memory_usage("After Mistral API")
 
         logging.info("Story generated successfully.")
 
-        # ✅ Generate illustration
-        illustration_prompt = f"A children's storybook illustration for: {story_content[:100]}..."
-        logging.info("Calling Replicate API for image generation...")
-
-        log_memory_usage("Before Replicate API")
-        illustration_url = generate_image(illustration_prompt)
-        log_memory_usage("After Replicate API")
-
-        if not illustration_url:
-            illustration_url = "https://example.com/default_image.jpg"  # Fallback image
-
-        logging.info(f"Illustration URL: {illustration_url}")
-
         # ✅ Load and render HTML template
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
 
-        rendered_html = template.render(
+         rendered_html = template.render(
             title=f"A Personalized Story for {child_name}",
             author=child_name,
-            content=story_content,
-            illustrations=[illustration_url]
+            sections=sections,  # Pass structured sections
+            illustrations=illustrations
         )
 
         logging.info("Rendering PDF with WeasyPrint...")
