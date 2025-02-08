@@ -240,7 +240,7 @@ def generate_story():
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
 
-         rendered_html = template.render(
+        rendered_html = template.render(
             title=f"A Personalized Story for {child_name}",
             author=child_name,
             sections=sections,
