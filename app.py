@@ -79,13 +79,13 @@ def generate_story_mistral(prompt, max_tokens=800):
             "Content-Type": "application/json"
         }
 
-        # Modify prompt to ensure structured output
-        prompt += """
-        Format the story with clearly labeled sections. 
-        Use 'SECTION 1:', 'SECTION 2:', etc. to separate the parts.
-        Each section should be approximately equal in length.
+        # Dynamically adjust tokens to avoid cutting off sections
+        section_estimate = max(3, min(10, max_tokens // 150))  # Limits sections between 3-10
+        prompt += f"""
+        Structure the story into {section_estimate} sections.
+        Clearly label each section as "SECTION X:". Ensure even distribution.
         """
-
+        
         payload = {
             "model": "mistral-medium",
             "messages": [
@@ -243,7 +243,7 @@ def generate_story():
          rendered_html = template.render(
             title=f"A Personalized Story for {child_name}",
             author=child_name,
-            sections=sections,  # Pass structured sections
+            sections=sections,
             illustrations=illustrations
         )
 
