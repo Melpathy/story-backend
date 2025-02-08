@@ -192,7 +192,7 @@ def generate_story():
 
         prompt += f" The story should teach the moral lesson of {moral_lesson}."
 
-        if toggle_customization: == "yes":
+        if toggle_customization:
             prompt += f" The genre is {story_genre} with a {story_tone} tone."
 
         if surprise_ending:
