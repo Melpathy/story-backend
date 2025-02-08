@@ -120,13 +120,13 @@ def generate_story():
         custom_character = data.get('custom-character', None)
         interests = data.get('interests', 'adventures')
         moral_lesson = data.get('moralLesson', 'kindness')
-        toggle_customization = data.get('toggle-customization', 'No')
+        toggle_customization = data.get('toggle-customization', 'no').strip().lower() == 'yes'
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
-        surprise_ending = data.get('surprise-ending', False)
+        surprise_ending = str(data.get('surprise-ending', 'false')).strip().lower() == 'true'
         story_language = data.get('story-language', 'English')
         custom_language = data.get('custom-language', None)
-        bilingual_mode = data.get('bilingual-mode', False)
+        bilingual_mode = str(data.get('bilingual-mode', 'false')).strip().lower() == 'true'
         bilingual_language = data.get('bilingual-language', 'English')
         custom_bilingual_language = data.get('custom-bilingual-language', None)
         best_friend = data.get('best-friend', None)
@@ -135,7 +135,7 @@ def generate_story():
         # ✅ Build the Story Prompt
         prompt = (
             f"Write a children's story for a {age}-year-old. "
-            f"The main character is a {character_type.lower() named {child_name}}."
+            f"The main character is a {character_type.lower()} named {child_name}."
         )
 
         if custom_character:
@@ -160,13 +160,14 @@ def generate_story():
 
         # ✅ Handle Bilingual Mode
         if bilingual_mode:
-            if bilingual_language.lower() == "other bilingual language" and custom_bilingual_language:
+            if bilingual_language and bilingual_language.lower() == "other-bilingual" and custom_bilingual_language:
                 prompt += f" The story should be written in both English and {custom_bilingual_language}."
-            else:
+            elif bilingual_language:
                 prompt += f" The story should be written in both English and {bilingual_language}."
 
+
         # ✅ Handle Custom Story Language
-        if story_language.lower() == "other-language" and custom_language:
+        if story_language and story_language.lower() == "other-language" and custom_language:
             prompt += f" The story should be written in {custom_language}."
 
         log_memory_usage("Before Mistral API")
