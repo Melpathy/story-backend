@@ -134,8 +134,8 @@ def generate_story():
 
         # ✅ Build the Story Prompt
         prompt = (
-            f"Write a children's story for a {age}-year-old named {child_name}. "
-            f"The main character is a {character_type.lower()}."
+            f"Write a children's story for a {age}-year-old. "
+            f"The main character is a {character_type.lower() named {child_name}}."
         )
 
         if custom_character:
