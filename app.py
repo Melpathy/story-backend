@@ -44,16 +44,17 @@ API_KEYS = {
 
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
-    """Background task to generate PDFs without blocking API, optimized for low memory usage."""
+    """Background task to generate PDFs without blocking API, ensuring it saves properly."""
     pdf_dir = "/persistent/pdfs"  # ✅ Store PDFs in a persistent directory
     os.makedirs(pdf_dir, exist_ok=True)
     pdf_path = os.path.join(pdf_dir, pdf_filename)
 
     try:
         with open(pdf_path, "wb") as pdf_file:
-            HTML(string=html_content).write_pdf(pdf_file)  # ✅ Streams instead of holding in memory
+            HTML(string=html_content).write_pdf(pdf_file)  # ✅ Streams PDF instead of holding in memory
+
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
-        return pdf_path
+        return pdf_path  # ✅ Return the correct file path
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
