@@ -292,7 +292,8 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = generate_image_per_section(sections)
+        illustrations = []  # Empty list to avoid errors
+        # illustrations = generate_image_per_section(sections)
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
@@ -317,6 +318,7 @@ def generate_story():
 
         # ✅ Run PDF generation as a background Celery task
         task = generate_pdf_task.delay(rendered_html, pdf_filename)
+        logging.info(f"✅ Celery Task Queued: Task ID {task.id}")
 
         pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"
 
