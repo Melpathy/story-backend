@@ -45,7 +45,9 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, optimized for low memory usage."""
-    pdf_path = os.path.join("/tmp", pdf_filename)
+    pdf_dir = "/persistent/pdfs"  # ✅ Store PDFs in a persistent directory
+    os.makedirs(pdf_dir, exist_ok=True)
+    pdf_path = os.path.join(pdf_dir, pdf_filename)
 
     try:
         with open(pdf_path, "wb") as pdf_file:
@@ -341,17 +343,14 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    """Serves the generated PDF for download."""
-    pdf_path = f"/tmp/{filename}"
-    
-    # ✅ Log whether the file exists
+    pdf_path = f"/persistent/pdfs/{filename}"  # ✅ Update the file path
+
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
-        return jsonify({"status": "error", "message": f"File not found: {pdf_path}"}), 404
-    
+        return jsonify({"status": "error", "message": f"File not found: {filename}"}), 404
+
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
-
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
