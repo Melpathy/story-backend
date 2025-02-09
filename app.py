@@ -2,6 +2,7 @@ from celery import Celery
 from flask import Flask, request, jsonify, send_file
 from weasyprint import HTML
 from jinja2 import Template
+import time
 import os
 import tempfile  # Use temporary files instead of keeping data in memory
 from io import BytesIO
