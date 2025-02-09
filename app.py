@@ -51,7 +51,7 @@ def generate_pdf_task(html_content, pdf_filename):
     pdf_dir = "/tmp"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
-    pdf_path = os.path.join(pdf_dir, pdf_filename)
+    pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))  # ✅ Fix filename issues
     
     logging.info(f"🔍 Creating directory (if not exists): {pdf_dir}")
     logging.info(f"📂 Saving PDF to: {pdf_path}")
@@ -64,7 +64,6 @@ def generate_pdf_task(html_content, pdf_filename):
         logging.error(f"❌ PDF was not actually saved at: {pdf_path}")
         return None
 
-    time.sleep(10)  # ✅ Prevent deletion before download
     return pdf_path
 
     except Exception as e:
@@ -345,11 +344,12 @@ def generate_story():
         log_memory_usage("Before PDF Generation")
 
         # ✅ Define PDF filename **BEFORE** starting Celery task
-        pdf_filename = f"{child_name}_story.pdf"
+        pdf_filename = f"{child_name.strip().replace(' ', '_')}_story.pdf"  # ✅ Ensure clean filename
+        logging.info(f"📂 Using PDF filename: {pdf_filename}")  # ✅ Debugging log
 
         # ✅ Run PDF generation as a background Celery task
         task = generate_pdf_task.delay(rendered_html, pdf_filename)
-        logging.info(f"✅ Celery Task Queued: Task ID {task.id}")
+        logging.info(f"✅ Celery Task Queued: Task ID {task.id} with filename {pdf_filename}")
 
         pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"
 
