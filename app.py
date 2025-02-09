@@ -46,21 +46,19 @@ API_KEYS = {
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, ensuring it saves properly."""
     
-    # ✅ Use a persistent directory to prevent file loss
-    pdf_dir = "/persistent/pdfs"
+    pdf_dir = "/tmp/pdfs"  # ✅ This should be /tmp/pdfs/, NOT /persistent/pdfs/
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
-    
+
     pdf_path = os.path.join(pdf_dir, pdf_filename)
 
     try:
-        # ✅ Generate and save the PDF efficiently
-        HTML(string=html_content).write_pdf(pdf_path)
-
+        HTML(string=html_content).write_pdf(pdf_path)  # ✅ Save PDF in /tmp/pdfs/
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
         return pdf_path  # ✅ Return the correct file path
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
+
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
@@ -349,7 +347,7 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/persistent/pdfs/{filename}"  # ✅ Uses the new persistent directory
+    pdf_path = f"/tmp/pdfs/{filename}"  # ✅ Ensure Flask is looking in the correct directory
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
