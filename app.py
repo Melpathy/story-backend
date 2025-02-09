@@ -45,15 +45,16 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, ensuring it saves properly."""
-    pdf_dir = "/tmp/pdfs"  # ✅ Use a writable directory
+    
+    # ✅ Use a persistent directory to prevent file loss
+    pdf_dir = "/persistent/pdfs"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
-    pdf_path = os.path.join(pdf_dir, pdf_filename)
-    os.makedirs(pdf_dir, exist_ok=True)
+    
     pdf_path = os.path.join(pdf_dir, pdf_filename)
 
     try:
-        with open(pdf_path, "wb") as pdf_file:
-            HTML(string=html_content).write_pdf(pdf_file)  # ✅ Streams PDF instead of holding in memory
+        # ✅ Generate and save the PDF efficiently
+        HTML(string=html_content).write_pdf(pdf_path)
 
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
         return pdf_path  # ✅ Return the correct file path
@@ -348,7 +349,7 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/pdfs/{filename}"  # ✅ Use /tmp/pdfs/
+    pdf_path = f"/persistent/pdfs/{filename}"  # ✅ Uses the new persistent directory
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
