@@ -57,9 +57,19 @@ def get_task_status(task_id):
     if task.state == 'PENDING':
         return jsonify({"status": "pending", "message": "PDF is still being generated."})
     elif task.state == 'SUCCESS':
-        return jsonify({"status": "completed", "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(task.result)}"})
+        pdf_path = task.result  # Get the returned PDF path
+        if pdf_path and os.path.exists(pdf_path):
+            return jsonify({
+                "status": "completed",
+                "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(pdf_path)}"
+            })
+        else:
+            return jsonify({"status": "error", "message": "PDF was generated but cannot be found."}), 500
+    elif task.state == 'FAILURE':
+        return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
     else:
-        return jsonify({"status": task.state, "message": "Task is in progress or failed."})
+        return jsonify({"status": task.state, "message": "Task is in progress."})
+
 
 
 # Validate API Keys
