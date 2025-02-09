@@ -377,7 +377,7 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/{filename}"  # ✅ Use /tmp/ directly
+    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
