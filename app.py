@@ -259,6 +259,7 @@ def generate_story():
         rendered_html = template.render(
             title=f"A Personalized Story for {child_name}",
             author=child_name,
+            content=full_story,
             sections=sections,
             illustrations=illustrations
         )
