@@ -51,7 +51,9 @@ def generate_pdf_task(html_content, pdf_filename):
     pdf_dir = "/tmp"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
-    pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))  # ✅ Fix filename issues
+    pdf_filename = pdf_filename.strip().replace(' ', '_')  # ✅ Fix double spaces in filenames
+    pdf_path = os.path.join(pdf_dir, pdf_filename)
+
     
     logging.info(f"🔍 Creating directory (if not exists): {pdf_dir}")
     logging.info(f"📂 Saving PDF to: {pdf_path}")
