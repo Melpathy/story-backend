@@ -165,7 +165,10 @@ def generate_story():
         character_type = data.get('character-type', 'Boy')
         custom_character = data.get('custom-character', None)
         interests = data.get('interests', 'adventures')
-        moral_lesson = data.get('moralLesson', 'kindness')
+        # Ensure "moralLesson" is always a list
+        moral_lesson = data.get("moralLesson", [])
+        if isinstance(moral_lesson, str):  # Convert single values into a list
+            moral_lesson = [moral_lesson]
         toggle_customization = data.get('toggle-customization', 'no').strip().lower() == 'yes'
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
@@ -190,7 +193,10 @@ def generate_story():
         if interests:
             prompt += f" The story should include their interests: {interests}."
 
-        prompt += f" The story should teach the moral lesson of {moral_lesson}."
+        if moral_lesson:
+            moral_lessons_text = ", ".join(moral_lesson)  # Convert list to a readable string
+            prompt += f" The story should teach the moral lessons of {moral_lessons_text}."
+
 
         if toggle_customization:
             prompt += f" The genre is {story_genre} with a {story_tone} tone."
