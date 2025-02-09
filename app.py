@@ -19,6 +19,8 @@ app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = 'redis://red-cuki0556l47c73cc9vi0:6379/0'  # ✅ Use Redis as Celery Broker
 app.config['CELERY_RESULT_BACKEND'] = 'redis://red-cuki0556l47c73cc9vi0:6379/0'  # ✅ Store results in Redis
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'], backend=app.config['CELERY_RESULT_BACKEND'])
+celery.conf.broker_connection_retry_on_startup = True  # ✅ New setting to avoid warnings
+
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # ✅ Allow up to 16MB requests
 
