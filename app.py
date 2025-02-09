@@ -189,7 +189,7 @@ def generate_image_per_section(sections):
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
-    """Handles the story and PDF generation request."""
+    """Handles the story and PDF generation request asynchronously."""
     try:
         # ✅ Get request data
         data = request.get_json()
@@ -201,10 +201,12 @@ def generate_story():
         character_type = data.get('character-type', 'Boy')
         custom_character = data.get('custom-character', None)
         interests = data.get('interests', 'adventures')
-        # Ensure "moralLesson" is always a list
+
+        # ✅ Ensure "moralLesson" is always a list
         moral_lesson = data.get("moralLesson", [])
         if isinstance(moral_lesson, str):  # Convert single values into a list
             moral_lesson = [moral_lesson]
+
         toggle_customization = data.get('toggle-customization', 'no').strip().lower() == 'yes'
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
@@ -233,7 +235,6 @@ def generate_story():
             moral_lessons_text = ", ".join(moral_lesson)  # Convert list to a readable string
             prompt += f" The story should teach the moral lessons of {moral_lessons_text}."
 
-
         if toggle_customization:
             prompt += f" The genre is {story_genre} with a {story_tone} tone."
 
@@ -253,13 +254,12 @@ def generate_story():
             elif bilingual_language:
                 prompt += f" The story should be written in both English and {bilingual_language}."
 
-
         # ✅ Handle Custom Story Language
         if story_language and story_language.lower() == "other-language" and custom_language:
             prompt += f" The story should be written in {custom_language}."
 
         log_memory_usage("Before Mistral API")
-        
+
         # ✅ Log the prompt in the console
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
@@ -275,7 +275,6 @@ def generate_story():
         illustrations = generate_image_per_section(sections)
 
         log_memory_usage("After Mistral API")
-
         logging.info("Story generated successfully.")
 
         # ✅ Load and render HTML template
@@ -293,24 +292,20 @@ def generate_story():
         logging.info("Rendering PDF with WeasyPrint...")
         log_memory_usage("Before PDF Generation")
 
-        # ✅ Generate PDF using a temporary file (reduces memory pressure)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-            task = generate_pdf_task.delay(rendered_html, pdf_filename)  # ✅ Run PDF generation in background
-            pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"
-            
-            return jsonify({
-                "status": "pending",
-                "message": "PDF is being generated.",
-                "task_id": task.id,  # ✅ Send Task ID so the user can check progress
-                "pdf_url": pdf_url  # ✅ This will be valid once the task completes
-            })
+        # ✅ Define PDF filename **BEFORE** starting Celery task
+        pdf_filename = f"{child_name}_story.pdf"
 
-            pdf_filename = os.path.basename(temp_pdf.name)
-            pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"  # URL to access the PDF
+        # ✅ Run PDF generation as a background Celery task
+        task = generate_pdf_task.delay(rendered_html, pdf_filename)
 
-        log_memory_usage("After PDF Generation")
+        pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"
 
-        logging.info(f"✅ Returning API response: PDF URL: {pdf_url}")
+        return jsonify({
+            "status": "pending",
+            "message": "PDF is being generated.",
+            "task_id": task.id,  # ✅ Send Task ID so the user can check progress
+            "pdf_url": pdf_url  # ✅ This will be valid once the task completes
+        })
 
     except MemoryError:
         logging.error("Memory limit exceeded! Consider reducing API responses or upgrading memory.")
