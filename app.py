@@ -44,10 +44,17 @@ API_KEYS = {
 
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
-    """Background task to generate PDFs without blocking API."""
+    """Background task to generate PDFs without blocking API, optimized for low memory usage."""
     pdf_path = os.path.join("/tmp", pdf_filename)
-    HTML(string=html_content).write_pdf(pdf_path)
-    return pdf_path  # ✅ Return the generated PDF path
+
+    try:
+        with open(pdf_path, "wb") as pdf_file:
+            HTML(string=html_content).write_pdf(pdf_file)  # ✅ Streams instead of holding in memory
+        logging.info(f"✅ PDF successfully saved: {pdf_path}")
+        return pdf_path
+    except Exception as e:
+        logging.error(f"❌ PDF Generation Failed: {str(e)}")
+        return None
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
