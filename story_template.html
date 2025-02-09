@@ -63,9 +63,14 @@
     </div>
 
     <!-- Illustrations -->
+    {% if illustrations %}
     {% for illustration in illustrations %}
-    <div class="page-break"></div>
-    <img src="{{ illustration }}" class="illustration" alt="Illustration">
+        <div class="page-break"></div>
+        <img src="{{ illustration }}" class="illustration" alt="Illustration">
     {% endfor %}
+{% else %}
+    <p style="text-align:center; font-style:italic;">(Illustrations not generated in this test.)</p>
+{% endif %}
+
 </body>
 </html>
