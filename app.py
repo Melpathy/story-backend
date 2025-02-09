@@ -48,29 +48,24 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, ensuring it saves properly."""
+    
     pdf_dir = "/tmp"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
-    pdf_filename = pdf_filename.strip().replace(' ', '_')  # ✅ Fix double spaces in filenames
-    pdf_path = os.path.join(pdf_dir, pdf_filename)
-
+    pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))  # ✅ Fix filename issues
     
     logging.info(f"🔍 Creating directory (if not exists): {pdf_dir}")
     logging.info(f"📂 Saving PDF to: {pdf_path}")
 
     try:
-        HTML(string=html_content).write_pdf(pdf_path)  # ✅ Properly indented
+        HTML(string=html_content).write_pdf(pdf_path)
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        if not os.path.exists(pdf_path):
-            logging.error(f"❌ PDF was not actually saved at: {pdf_path}")
-            return None
-
-        return pdf_path  # ✅ Correct indentation
+        # ✅ Return absolute path for Flask to use
+        return pdf_path
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
-
 
 
 @app.route('/task-status/<task_id>', methods=['GET'])
@@ -88,7 +83,7 @@ def get_task_status(task_id):
         if task.state == "PENDING":
             return jsonify({"status": "pending", "message": "PDF is still being generated."})
         elif task.state == "SUCCESS":
-            pdf_path = task.result  # Get the returned PDF path
+            pdf_path = task.result  # ✅ Get the returned full file path
 
             if pdf_path is None:
                 logging.error(f"❌ Celery task returned None for task ID: {task_id}")
@@ -101,7 +96,7 @@ def get_task_status(task_id):
                 })
             else:
                 logging.error(f"❌ PDF was generated but cannot be found: {pdf_path}")
-                return jsonify({"status": "error", "message": "PDF was generated but cannot be found."}), 500
+                return jsonify({"status": "error", "message": f"PDF not found at: {pdf_path}"}), 500
         elif task.state == "FAILURE":
             logging.error(f"❌ Celery task {task_id} failed.")
             return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
@@ -111,6 +106,7 @@ def get_task_status(task_id):
     except Exception as e:
         logging.error(f"❌ Error in Task Status API: {str(e)}")
         return jsonify({"status": "error", "message": f"Internal Server Error: {str(e)}"}), 500
+
 
 
 
@@ -379,9 +375,9 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"  # ✅ Ensure filename matches exactly
+    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"  # ✅ Ensure filename is formatted correctly
 
-    logging.info(f"🔍 Checking for PDF: {pdf_path}")
+    logging.info(f"🔍 Flask is looking for PDF: {pdf_path}")
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
@@ -389,7 +385,6 @@ def download_file(filename):
 
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
-
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
