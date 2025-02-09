@@ -45,7 +45,7 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, ensuring it saves properly."""
-    pdf_dir = "/tmp/pdfs"
+    pdf_dir = "/tmp"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
     pdf_path = os.path.join(pdf_dir, pdf_filename)
