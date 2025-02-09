@@ -57,18 +57,18 @@ def generate_pdf_task(html_content, pdf_filename):
     logging.info(f"📂 Saving PDF to: {pdf_path}")
 
     try:
-    HTML(string=html_content).write_pdf(pdf_path)
-    logging.info(f"✅ PDF successfully saved: {pdf_path}")
+        HTML(string=html_content).write_pdf(pdf_path)  # ✅ Properly indented
+        logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-    if not os.path.exists(pdf_path):
-        logging.error(f"❌ PDF was not actually saved at: {pdf_path}")
-        return None
+        if not os.path.exists(pdf_path):
+            logging.error(f"❌ PDF was not actually saved at: {pdf_path}")
+            return None
 
-    return pdf_path
-
+        return pdf_path  # ✅ Correct indentation
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
+
 
 
 @app.route('/task-status/<task_id>', methods=['GET'])
