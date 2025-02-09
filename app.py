@@ -335,8 +335,16 @@ def generate_story():
 @app.route('/download/<filename>')
 def download_file(filename):
     """Serves the generated PDF for download."""
-    pdf_path = f"/tmp/{filename}"  # Ensure this matches your PDF storage path
+    pdf_path = f"/tmp/{filename}"
+    
+    # ✅ Log whether the file exists
+    if not os.path.exists(pdf_path):
+        logging.error(f"❌ PDF not found: {pdf_path}")
+        return jsonify({"status": "error", "message": f"File not found: {pdf_path}"}), 404
+    
+    logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
+
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
