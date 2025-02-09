@@ -379,11 +379,13 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"
+    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"  # ✅ Ensure filename matches exactly
+
+    logging.info(f"🔍 Checking for PDF: {pdf_path}")
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
-        return jsonify({"status": "error", "message": f"File not found: {filename}"}), 404
+        return jsonify({"status": "error", "message": f"File not found: {pdf_path}"}), 404
 
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
