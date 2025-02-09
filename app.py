@@ -351,7 +351,7 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/pdfs/{filename}"  # ✅ Ensure Flask is looking in the correct directory
+    pdf_path = f"/tmp/{filename}"  # ✅ Use /tmp/ directly
 
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found: {pdf_path}")
@@ -359,6 +359,7 @@ def download_file(filename):
 
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
+
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
