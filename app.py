@@ -264,6 +264,8 @@ def generate_story():
 
         log_memory_usage("After PDF Generation")
 
+        logging.info(f"✅ Returning API response: PDF URL: {pdf_url}")
+
         return jsonify({
             "status": "success",
             "message": "Story generated successfully!",
