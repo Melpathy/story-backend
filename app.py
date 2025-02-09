@@ -45,16 +45,20 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """Background task to generate PDFs without blocking API, ensuring it saves properly."""
-    
-    pdf_dir = "/tmp/pdfs"  # ✅ This should be /tmp/pdfs/, NOT /persistent/pdfs/
+    pdf_dir = "/tmp/pdfs"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
     pdf_path = os.path.join(pdf_dir, pdf_filename)
+    
+    logging.info(f"🔍 Creating directory (if not exists): {pdf_dir}")
+    logging.info(f"📂 Saving PDF to: {pdf_path}")
 
     try:
-        HTML(string=html_content).write_pdf(pdf_path)  # ✅ Save PDF in /tmp/pdfs/
+        HTML(string=html_content).write_pdf(pdf_path)
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
-        return pdf_path  # ✅ Return the correct file path
+
+        time.sleep(10)  # ✅ Delay before Celery task ends to keep the file alive
+        return pdf_path
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
