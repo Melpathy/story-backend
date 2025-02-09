@@ -57,11 +57,16 @@ def generate_pdf_task(html_content, pdf_filename):
     logging.info(f"📂 Saving PDF to: {pdf_path}")
 
     try:
-        HTML(string=html_content).write_pdf(pdf_path)
-        logging.info(f"✅ PDF successfully saved: {pdf_path}")
+    HTML(string=html_content).write_pdf(pdf_path)
+    logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        time.sleep(10)  # ✅ Delay before Celery task ends to keep the file alive
-        return pdf_path
+    if not os.path.exists(pdf_path):
+        logging.error(f"❌ PDF was not actually saved at: {pdf_path}")
+        return None
+
+    time.sleep(10)  # ✅ Prevent deletion before download
+    return pdf_path
+
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
@@ -69,24 +74,42 @@ def generate_pdf_task(html_content, pdf_filename):
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
-    """Check the status of a Celery task."""
-    task = generate_pdf_task.AsyncResult(task_id)
+    """Check the status of a Celery task and log errors properly."""
+    try:
+        task = generate_pdf_task.AsyncResult(task_id)
 
-    if task.state == 'PENDING':
-        return jsonify({"status": "pending", "message": "PDF is still being generated."})
-    elif task.state == 'SUCCESS':
-        pdf_path = task.result  # Get the returned PDF path
-        if pdf_path and os.path.exists(pdf_path):
-            return jsonify({
-                "status": "completed",
-                "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(pdf_path)}"
-            })
+        if task is None:
+            logging.error(f"❌ Invalid Task ID: {task_id}")
+            return jsonify({"status": "error", "message": "Invalid task ID"}), 400
+
+        logging.info(f"🔍 Checking Task Status: {task_id}, State: {task.state}")
+
+        if task.state == "PENDING":
+            return jsonify({"status": "pending", "message": "PDF is still being generated."})
+        elif task.state == "SUCCESS":
+            pdf_path = task.result  # Get the returned PDF path
+
+            if pdf_path is None:
+                logging.error(f"❌ Celery task returned None for task ID: {task_id}")
+                return jsonify({"status": "error", "message": "Task completed but returned no PDF path."}), 500
+
+            if os.path.exists(pdf_path):
+                return jsonify({
+                    "status": "completed",
+                    "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(pdf_path)}"
+                })
+            else:
+                logging.error(f"❌ PDF was generated but cannot be found: {pdf_path}")
+                return jsonify({"status": "error", "message": "PDF was generated but cannot be found."}), 500
+        elif task.state == "FAILURE":
+            logging.error(f"❌ Celery task {task_id} failed.")
+            return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
         else:
-            return jsonify({"status": "error", "message": "PDF was generated but cannot be found."}), 500
-    elif task.state == 'FAILURE':
-        return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
-    else:
-        return jsonify({"status": task.state, "message": "Task is in progress."})
+            return jsonify({"status": task.state, "message": "Task is in progress."})
+
+    except Exception as e:
+        logging.error(f"❌ Error in Task Status API: {str(e)}")
+        return jsonify({"status": "error", "message": f"Internal Server Error: {str(e)}"}), 500
 
 
 
