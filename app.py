@@ -14,8 +14,18 @@ from flask_cors import CORS
 import re
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # ✅ Allow up to 16MB requests
 
-CORS(app, resources={r"/*": {"origins": ["https://mels-story-site.webflow.io"]}})
+# ✅ Ensure CORS allows Webflow requests
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+@app.after_request
+def add_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
