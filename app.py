@@ -1,3 +1,4 @@
+from celery import Celery
 from flask import Flask, request, jsonify, send_file
 from weasyprint import HTML
 from jinja2 import Template
@@ -13,7 +14,12 @@ from flask import Flask
 from flask_cors import CORS
 import re
 
+
 app = Flask(__name__)
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'  # ✅ Use Redis as Celery Broker
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'  # ✅ Store results in Redis
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'], backend=app.config['CELERY_RESULT_BACKEND'])
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # ✅ Allow up to 16MB requests
 
 # ✅ Ensure CORS allows Webflow requests
@@ -35,6 +41,26 @@ API_KEYS = {
     "mistral": os.getenv("MISTRAL_API_KEY"),
     "replicate": os.getenv("REPLICATE_API_TOKEN")
 }
+
+@celery.task
+def generate_pdf_task(html_content, pdf_filename):
+    """Background task to generate PDFs without blocking API."""
+    pdf_path = os.path.join("/tmp", pdf_filename)
+    HTML(string=html_content).write_pdf(pdf_path)
+    return pdf_path  # ✅ Return the generated PDF path
+
+@app.route('/task-status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    """Check the status of a Celery task."""
+    task = generate_pdf_task.AsyncResult(task_id)
+
+    if task.state == 'PENDING':
+        return jsonify({"status": "pending", "message": "PDF is still being generated."})
+    elif task.state == 'SUCCESS':
+        return jsonify({"status": "completed", "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(task.result)}"})
+    else:
+        return jsonify({"status": task.state, "message": "Task is in progress or failed."})
+
 
 # Validate API Keys
 if not API_KEYS["mistral"]:
@@ -269,19 +295,22 @@ def generate_story():
 
         # ✅ Generate PDF using a temporary file (reduces memory pressure)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
-            HTML(string=rendered_html).write_pdf(temp_pdf.name)
+            task = generate_pdf_task.delay(rendered_html, pdf_filename)  # ✅ Run PDF generation in background
+            pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"
+            
+            return jsonify({
+                "status": "pending",
+                "message": "PDF is being generated.",
+                "task_id": task.id,  # ✅ Send Task ID so the user can check progress
+                "pdf_url": pdf_url  # ✅ This will be valid once the task completes
+            })
+
             pdf_filename = os.path.basename(temp_pdf.name)
             pdf_url = f"https://story-backend-g7he.onrender.com/download/{pdf_filename}"  # URL to access the PDF
 
         log_memory_usage("After PDF Generation")
 
         logging.info(f"✅ Returning API response: PDF URL: {pdf_url}")
-
-        return jsonify({
-            "status": "success",
-            "message": "Story generated successfully!",
-            "pdf_url": pdf_url
-        })
 
     except MemoryError:
         logging.error("Memory limit exceeded! Consider reducing API responses or upgrading memory.")
