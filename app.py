@@ -2,6 +2,7 @@ from celery import Celery
 from flask import Flask, request, jsonify, send_file
 from weasyprint import HTML
 from jinja2 import Template
+import boto3
 import time
 import os
 import tempfile  # Use temporary files instead of keeping data in memory
@@ -28,6 +29,14 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # ✅ Allow up to 16MB requ
 # ✅ Ensure CORS allows Webflow requests
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
+# Initialize S3 Client
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("AWS_REGION"),
+)
+
 @app.after_request
 def add_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -49,74 +58,56 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """
-    Background task to generate PDFs asynchronously, ensuring proper saving in a shared directory.
+    Generate PDF, upload to S3, and return the S3 URL.
     """
-    
-    # Define a shared directory accessible by both Flask and Celery
-    pdf_dir = "/home/render/pdfs"
-    os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
-    # Sanitize filename and construct full PDF path
-    sanitized_filename = pdf_filename.strip().replace(' ', '_')
-    pdf_path = os.path.join(pdf_dir, sanitized_filename)
+    # ✅ Save the PDF in a temporary directory
+    pdf_dir = "/tmp"
+    os.makedirs(pdf_dir, exist_ok=True)
+    pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
 
-    logging.info(f"🔍 Ensuring directory exists: {pdf_dir}")
-    logging.info(f"📂 Target PDF path: {pdf_path}")
+    logging.info(f"📂 Generating PDF at: {pdf_path}")
 
     try:
-        # Remove old file if it exists to avoid conflicts
-        if os.path.exists(pdf_path):
-            os.remove(pdf_path)
-            logging.info(f"🗑️ Old PDF removed: {pdf_path}")
-
-        # Generate and save new PDF
+        # ✅ Generate PDF
         HTML(string=html_content).write_pdf(pdf_path)
-        logging.info(f"✅ PDF successfully generated: {pdf_path}")
+        logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        return pdf_path  # ✅ Return absolute file path for Flask
+        # ✅ Upload to S3
+        bucket_name = os.getenv("S3_BUCKET_NAME")
+        s3_key = f"pdfs/{pdf_filename.strip().replace(' ', '_')}"  # Store in "pdfs/" folder
+
+        s3_client.upload_file(pdf_path, bucket_name, s3_key, ExtraArgs={'ContentType': 'application/pdf'})
+        s3_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{s3_key}"
+
+        logging.info(f"✅ PDF uploaded to S3: {s3_url}")
+
+        return s3_url  # ✅ Return S3 URL instead of local path
+
     except Exception as e:
-        logging.error(f"❌ PDF Generation Failed: {e}")
+        logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
-
+        
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
-    """Check the status of a Celery task and log errors properly."""
-    try:
-        task = generate_pdf_task.AsyncResult(task_id)
+    """Check Celery task status and return S3 URL if ready."""
+    task = generate_pdf_task.AsyncResult(task_id)
 
-        if task is None:
-            logging.error(f"❌ Invalid Task ID: {task_id}")
-            return jsonify({"status": "error", "message": "Invalid task ID"}), 400
+    if task.state == "PENDING":
+        return jsonify({"status": "pending", "message": "PDF is still being generated."})
 
-        logging.info(f"🔍 Checking Task Status: {task_id}, State: {task.state}")
-
-        if task.state == "PENDING":
-            return jsonify({"status": "pending", "message": "PDF is still being generated."})
-        elif task.state == "SUCCESS":
-            pdf_path = task.result  # ✅ Get the returned full file path
-
-            if pdf_path is None:
-                logging.error(f"❌ Celery task returned None for task ID: {task_id}")
-                return jsonify({"status": "error", "message": "Task completed but returned no PDF path."}), 500
-
-            if os.path.exists(pdf_path):
-                return jsonify({
-                    "status": "completed",
-                    "pdf_url": f"https://story-backend-g7he.onrender.com/download/{os.path.basename(pdf_path)}"
-                })
-            else:
-                logging.error(f"❌ PDF was generated but cannot be found: {pdf_path}")
-                return jsonify({"status": "error", "message": f"PDF not found at: {pdf_path}"}), 500
-        elif task.state == "FAILURE":
-            logging.error(f"❌ Celery task {task_id} failed.")
-            return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
+    elif task.state == "SUCCESS":
+        s3_url = task.result  # ✅ Get S3 URL
+        if s3_url:
+            return jsonify({"status": "completed", "pdf_url": s3_url})
         else:
-            return jsonify({"status": task.state, "message": "Task is in progress."})
+            return jsonify({"status": "error", "message": "Task completed but no PDF URL found."}), 500
 
-    except Exception as e:
-        logging.error(f"❌ Error in Task Status API: {str(e)}")
-        return jsonify({"status": "error", "message": f"Internal Server Error: {str(e)}"}), 500
+    elif task.state == "FAILURE":
+        return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
+
+    return jsonify({"status": task.state, "message": "Task is in progress."})
 
 
 
