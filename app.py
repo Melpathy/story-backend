@@ -2,6 +2,7 @@ from celery import Celery
 from flask import Flask, request, jsonify, send_file
 from weasyprint import HTML
 from jinja2 import Template
+from datetime import datetime
 import boto3
 import time
 import os
@@ -83,7 +84,9 @@ def generate_pdf_task(html_content, pdf_filename):
         logging.info(f"📡 Uploading PDF to S3 bucket: {bucket_name}, Key: {s3_key}")
 
         # ✅ Upload to S3
-        s3_client.upload_file(pdf_path, bucket_name, s3_key, ExtraArgs={'ContentType': 'application/pdf'})
+        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')  # Example: "2025-02-10"
+        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
+
 
         # ✅ Generate S3 URL
         s3_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{s3_key}"
