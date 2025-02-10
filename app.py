@@ -108,7 +108,11 @@ def get_task_status(task_id):
     elif task.state == "SUCCESS":
         s3_url = task.result  # ✅ Get S3 URL
         if s3_url:
-            return jsonify({"status": "completed", "pdf_url": s3_url})
+            return jsonify({
+                "status": "completed",
+                "pdf_url": s3_url,
+                "message": f"PDF successfully generated! Download here: {s3_url}"
+            })
         else:
             return jsonify({"status": "error", "message": "Task completed but no PDF URL found."}), 500
 
@@ -116,6 +120,7 @@ def get_task_status(task_id):
         return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
 
     return jsonify({"status": task.state, "message": "Task is in progress."})
+
 
 
 
