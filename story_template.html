@@ -44,8 +44,18 @@
             text-indent: 40px; /* Indent first line for better readability */
         }
 
+        .bilingual-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .bilingual-section div {
+            width: 48%;
+        }
+
         .illustration {
-            width: 350px; /* Slightly bigger */
+            width: 350px;
             height: auto;
             margin: 30px auto;
             display: block;
@@ -58,7 +68,7 @@
             font-size: 1.8em;
             font-weight: bold;
             margin-top: 40px;
-            color: #D35400; /* Orange highlight */
+            color: #D35400;
         }
 
         .page-break {
@@ -76,9 +86,24 @@
     <!-- Story Content -->
     <div class="page-break"></div>
     <div class="content">
-        {% for section in story_sections %}
-            <p class="section">{{ section }}</p>
-        {% endfor %}
+        {% if bilingual_mode %}
+            {% for section in sections %}
+                <h3>{{ section['title'] }}</h3>
+                <div class="bilingual-section">
+                    <div>
+                        <p class="section"><strong>English:</strong> {{ section['english'] }}</p>
+                    </div>
+                    <div>
+                        <p class="section"><strong>French:</strong> {{ section['french'] }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            {% for section in sections %}
+                <h3>{{ section['title'] }}</h3>
+                <p class="section">{{ section['content'] }}</p>
+            {% endfor %}
+        {% endif %}
         <p class="the-end">The End.</p>
     </div>
 
