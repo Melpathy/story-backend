@@ -19,7 +19,7 @@
 
         h1 {
             font-size: 2.8em;
-            color: #4A90E2; /* Light blue title */
+            color: #4A90E2;
             font-weight: bold;
         }
 
@@ -39,19 +39,17 @@
             margin-top: 50px;
         }
 
+        .chapter-title {
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
         .section {
             margin-bottom: 30px;
-            text-indent: 40px; /* Indent first line for better readability */
-        }
-
-        .bilingual-section {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .bilingual-section div {
-            width: 48%;
+            text-indent: 40px;
         }
 
         .illustration {
@@ -86,24 +84,10 @@
     <!-- Story Content -->
     <div class="page-break"></div>
     <div class="content">
-        {% if bilingual_mode %}
-            {% for section in sections %}
-                <h3>{{ section['title'] }}</h3>
-                <div class="bilingual-section">
-                    <div>
-                        <p class="section"><strong>English:</strong> {{ section['english'] }}</p>
-                    </div>
-                    <div>
-                        <p class="section"><strong>French:</strong> {{ section['french'] }}</p>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            {% for section in sections %}
-                <h3>{{ section['title'] }}</h3>
-                <p class="section">{{ section['content'] }}</p>
-            {% endfor %}
-        {% endif %}
+        {% for section in sections[:3] %}  <!-- Ensuring max 3 sections -->
+            <p class="chapter-title">{{ chapter_label }} {{ loop.index }}</p>
+            <p class="section">{{ section['content'] }}</p>
+        {% endfor %}
         <p class="the-end">The End.</p>
     </div>
 
