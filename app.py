@@ -197,9 +197,9 @@ def generate_story_mistral(prompt, max_tokens=800):
         max_sections = 3  # Limit to 3 sections
         
         prompt += f"""
-        Structure the story into exactly {max_sections} sections.
-        Clearly label each section as "SECTION X:". Ensure sections are balanced in length.
-        Each section should be well-defined and evenly distributed throughout the story.
+        Structure the story into exactly {max_sections} chapters.
+        Clearly label each chapter as "{chapter_label} X:". Ensure chapters are balanced in length.
+        Each chapter should be well-defined and evenly distributed throughout the story.
         """
         
         payload = {
@@ -261,9 +261,9 @@ def split_story_into_sections(story_text, max_sections=3):
     """ Parses the story into structured sections, ensuring no more than max_sections. """
     sections = []
     
-    # Regex to detect sections labeled as "SECTION 1:", "SECTION TWO", etc.
-    section_pattern = re.compile(r"(SECTION\s*\d+[:.]?)", re.IGNORECASE)
-    parts = section_pattern.split(story_text)[1:]  
+    # Dynamically detect "Chapter X" in the correct language
+    chapter_regex = re.compile(rf"({chapter_label}\s*\d+[:.]?)", re.IGNORECASE)
+    parts = chapter_regex.split(story_text)[1:]  # Splits the story at each "Chapter X:"
 
     # Ensure we don't exceed the max section count
     section_count = min(len(parts) // 2, max_sections)
