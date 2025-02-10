@@ -400,7 +400,7 @@ def generate_story():
             author=child_name,
             content=full_story,
             sections=sections,
-            illustrations=illustrations
+            illustrations=illustrations,
             chapter_label=chapter_label
         )
 
