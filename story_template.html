@@ -5,15 +5,22 @@
         @page {
             margin: 1in;
             size: A4;
+            background: #fff9f0;  /* Set background for every page */
         }
+        
+        html, body {
+            background: #fff9f0;
+            margin: 0;
+            padding: 20px;
+            min-height: 100%;
+        }
+        
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             line-height: 1.8;
             color: #333;
-            background-color: #fff9f0;
-            margin: 0;
-            padding: 20px;
         }
+        
         /* Cover page styles */
         .cover-page {
             text-align: center;
@@ -26,46 +33,60 @@
             border-radius: 15px;
             margin-bottom: 50px;
             padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        
         .cover-title {
             font-size: 3em;
             color: #4A90E2;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            font-family: 'Georgia', serif;
+            font-style: italic;
         }
+        
         .cover-author {
             font-size: 1.8em;
             color: #666;
             font-style: italic;
+            font-family: 'Georgia', serif;
         }
+        
         /* Chapter styles */
         .chapter {
-            page-break-before: always;
-            padding: 20px;
-            background: white;
+            background: rgba(255, 255, 255, 0.7);
             border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            page-break-before: always;
         }
+        
         .chapter-title {
             text-align: center;
             font-size: 2.2em;
             color: #2E86C1;
             margin: 30px 0;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-family: 'Georgia', serif;
+            font-style: italic;
         }
+        
         .chapter-content {
             font-size: 1.2em;
             text-align: justify;
             padding: 0 20px;
             margin-bottom: 30px;
+            line-height: 1.8;
         }
+        
         /* Illustration styles */
         .illustration-container {
             text-align: center;
             margin: 30px 0;
             page-break-inside: avoid;
         }
+        
         .illustration {
             max-width: 80%;
             height: auto;
@@ -73,11 +94,13 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             margin: 20px auto;
         }
+        
         .illustration-caption {
             font-style: italic;
             color: #666;
             margin-top: 10px;
         }
+        
         /* End page styles */
         .the-end {
             text-align: center;
@@ -86,7 +109,10 @@
             margin-top: 60px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             page-break-before: always;
+            font-family: 'Georgia', serif;
+            font-style: italic;
         }
+        
         /* Decorative elements */
         .chapter::before {
             content: "✧";
@@ -96,9 +122,19 @@
             font-size: 2em;
             margin-bottom: 20px;
         }
+        
         /* Page break utility */
         .page-break {
             page-break-before: always;
+        }
+
+        /* End section note styles */
+        .end-note {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -132,9 +168,7 @@
     <div class="the-end">
         The End
         {% if not illustrations %}
-        <p style="font-size: 16px; font-style: italic; color: #666;">
-            (Illustrations not generated in this test.)
-        </p>
+        <p class="end-note">(Illustrations not generated in this test.)</p>
         {% endif %}
     </div>
 </body>
