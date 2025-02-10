@@ -192,7 +192,7 @@ def translate_with_mistral(text, target_language):
     return mistral_response.strip().capitalize()
 
 
-def generate_story_mistral(prompt, max_tokens=800):
+def generate_story_mistral(prompt, chapter_label, max_tokens=800):
     """Generate a story using Mistral API with structured sections."""
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
@@ -204,7 +204,8 @@ def generate_story_mistral(prompt, max_tokens=800):
         # Dynamically adjust tokens to control section size
         max_sections = 3  # Limit to 3 sections
         
-        prompt += f"""
+        # Add chapter formatting instructions to prompt
+        formatted_prompt = f"""{prompt}
         Structure the story into exactly {max_sections} chapters.
         Clearly label each chapter as "{chapter_label} X:". Ensure chapters are balanced in length.
         Each chapter should be well-defined and evenly distributed throughout the story.
@@ -213,8 +214,14 @@ def generate_story_mistral(prompt, max_tokens=800):
         payload = {
             "model": "mistral-medium",
             "messages": [
-                {"role": "system", "content": "You are an expert children's story writer. Generate a complete, structured story divided into sections. Each section should be clearly labeled."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system", 
+                    "content": "You are an expert children's story writer. Generate a complete, structured story divided into sections. Each section should be clearly labeled."
+                },
+                {
+                    "role": "user", 
+                    "content": formatted_prompt
+                }
             ],
             "max_tokens": max_tokens,
             "temperature": 0.7,
@@ -240,7 +247,7 @@ def generate_story_mistral(prompt, max_tokens=800):
         return f"Error generating story. Exception: {str(e)}"
 
 
-def split_story_into_sections(story_text, max_sections=3):
+def split_story_into_sections(story_text, chapter_label, max_sections=3):
     """ Parses the story into structured sections, ensuring no more than max_sections. """
     sections = []
     
@@ -257,7 +264,7 @@ def split_story_into_sections(story_text, max_sections=3):
 
         # Generate a short summary for illustrations
         summary_prompt = f"Summarize this section in 2-3 sentences for an illustration: {section_content}"
-        summary = generate_story_mistral(summary_prompt, max_tokens=50)
+        summary = generate_story_mistral(summary_prompt, chapter_label, max_tokens=50)
 
         sections.append({
             "title": section_title,
@@ -288,7 +295,7 @@ def generate_story():
         data = request.get_json()
         logging.info(f"Received Data: {data}")  # Debugging
 
-        # ✅ Extract Language Fields
+        # ✅ Extract Language Fields - MOVED TO TOP
         story_language = data.get('story-language', 'English').lower()  # Ensure story_language is assigned
         selected_language = story_language if story_language else "english"
 
@@ -301,10 +308,9 @@ def generate_story():
         }
 
         # ✅ Assign Chapter Label (Translate if necessary)
-        if selected_language in chapter_labels:
-            chapter_label = chapter_labels[selected_language]
-        else:
-            chapter_label = translate_with_mistral("Chapter", selected_language)  # Use Mistral if not predefined
+        chapter_label = chapter_labels.get(selected_language)
+        if not chapter_label:
+            chapter_label = translate_with_mistral("Chapter", selected_language)
 
         # ✅ Extract Other Story Fields
         child_name = data.get('childName', 'child')
@@ -400,7 +406,7 @@ def generate_story():
             content=full_story,
             sections=sections,
             illustrations=illustrations,
-            chapter_label=chapter_label  # ✅ Now safely passed to template
+            chapter_label=chapter_label 
         )
 
         logging.info("Rendering PDF with WeasyPrint...")
