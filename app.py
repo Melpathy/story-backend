@@ -193,11 +193,13 @@ def generate_story_mistral(prompt, max_tokens=800):
             "Content-Type": "application/json"
         }
 
-        # Dynamically adjust tokens to avoid cutting off sections
-        section_estimate = max(3, min(10, max_tokens // 150))  # Limits sections between 3-10
+        # Dynamically adjust tokens to control section size
+        max_sections = 3  # Limit to 3 sections
+        
         prompt += f"""
-        Structure the story into {section_estimate} sections.
-        Clearly label each section as "SECTION X:". Ensure even distribution.
+        Structure the story into exactly {max_sections} sections.
+        Clearly label each section as "SECTION X:". Ensure sections are balanced in length.
+        Each section should be well-defined and evenly distributed throughout the story.
         """
         
         payload = {
