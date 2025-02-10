@@ -41,14 +41,14 @@
 
         .chapter-title {
             text-align: center;
-            font-size: 1.8em;
+            font-size: 2em;
             font-weight: bold;
-            margin-top: 40px;
-            margin-bottom: 20px;
+            margin-top: 50px;
+            margin-bottom: 30px;
         }
 
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             text-indent: 40px;
         }
 
@@ -65,7 +65,7 @@
             text-align: center;
             font-size: 1.8em;
             font-weight: bold;
-            margin-top: 40px;
+            margin-top: 60px;
             color: #D35400;
         }
 
@@ -84,9 +84,11 @@
     <!-- Story Content -->
     <div class="page-break"></div>
     <div class="content">
-        {% for section in sections[:3] %}  <!-- Ensuring max 3 sections -->
-            <p class="chapter-title">{{ chapter_label }} {{ loop.index }}</p>
+        {% set chapter_number = 1 %}  <!-- Initialize chapter numbering -->
+        {% for section in sections[:3] %}  <!-- Limiting to 3 sections -->
+            <p class="chapter-title">{{ chapter_label }} {{ chapter_number }}</p>
             <p class="section">{{ section['content'] }}</p>
+            {% set chapter_number = chapter_number + 1 %}
         {% endfor %}
         <p class="the-end">The End.</p>
     </div>
