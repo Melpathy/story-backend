@@ -4,10 +4,11 @@
     <style>
         /* General Styles */
         body {
-            font-family: 'Times New Roman', serif;
-            line-height: 1.6;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
             margin: 1in;
             color: #333;
+            text-align: justify;
         }
 
         h1, h2 {
@@ -17,14 +18,16 @@
         }
 
         h1 {
-            font-size: 2.5em;
+            font-size: 2.8em;
             color: #4A90E2; /* Light blue title */
+            font-weight: bold;
         }
 
         h2 {
             font-size: 1.5em;
             margin-bottom: 30px;
             color: #333;
+            font-style: italic;
         }
 
         .cover-page {
@@ -36,12 +39,26 @@
             margin-top: 50px;
         }
 
+        .section {
+            margin-bottom: 30px;
+            text-indent: 40px; /* Indent first line for better readability */
+        }
+
         .illustration {
-            width: 300px; /* Limit image width */
+            width: 350px; /* Slightly bigger */
             height: auto;
-            margin: 20px 0;
-            border: 2px solid #ddd;
-            padding: 5px;
+            margin: 30px auto;
+            display: block;
+            border-radius: 10px;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .the-end {
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-top: 40px;
+            color: #D35400; /* Orange highlight */
         }
 
         .page-break {
@@ -59,18 +76,20 @@
     <!-- Story Content -->
     <div class="page-break"></div>
     <div class="content">
-        {{ content }}
+        {% for section in story_sections %}
+            <p class="section">{{ section }}</p>
+        {% endfor %}
+        <p class="the-end">The End.</p>
     </div>
 
     <!-- Illustrations -->
     {% if illustrations %}
-    {% for illustration in illustrations %}
-        <div class="page-break"></div>
-        <img src="{{ illustration }}" class="illustration" alt="Illustration">
-    {% endfor %}
-{% else %}
-    <p style="text-align:center; font-style:italic;">(Illustrations not generated in this test.)</p>
-{% endif %}
-
+        {% for illustration in illustrations %}
+            <div class="page-break"></div>
+            <img src="{{ illustration }}" class="illustration" alt="Illustration">
+        {% endfor %}
+    {% else %}
+        <p style="text-align:center; font-style:italic;">(Illustrations not generated in this test.)</p>
+    {% endif %}
 </body>
 </html>
