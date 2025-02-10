@@ -140,9 +140,6 @@ def get_task_status(task_id):
     return jsonify({"status": task.state, "message": "Task is in progress."})
 
 
-
-
-
 # Validate API Keys
 if not API_KEYS["mistral"]:
     raise ValueError("Mistral API key not found. Set MISTRAL_API_KEY in environment variables.")
@@ -233,14 +230,43 @@ def generate_story_mistral(prompt, max_tokens=800):
         return f"Error generating story. Exception: {str(e)}"
 
 
-def split_story_into_sections(story_text):
-    """Parses the generated story into structured sections."""
+def translate_with_mistral(text, target_language):
+    """ Uses Mistral API to translate text if not predefined. """
+    mistral_prompt = f"Translate '{text}' into {target_language}. Only return the translated word."
+    
+    mistral_response = generate_story_mistral(mistral_prompt, max_tokens=10)
+    return mistral_response.strip().capitalize()
+
+# Predefined Chapter Labels
+chapter_labels = {
+    "english": "Chapter",
+    "french": "Chapitre",
+    "spanish": "Capítulo",
+    "german": "Kapitel"
+}
+
+# Detect Selected Language
+selected_language = story_language.lower() if story_language else "english"
+
+# Use Predefined Translation or Translate with Mistral
+if selected_language in chapter_labels:
+    chapter_label = chapter_labels[selected_language]
+else:
+    chapter_label = translate_with_mistral("Chapter", selected_language)
+
+
+def split_story_into_sections(story_text, max_sections=3):
+    """ Parses the story into structured sections, ensuring no more than max_sections. """
     sections = []
-    # Improved regex: Handles variations like "Section 1:", "SECTION 1", or "section one"
+    
+    # Regex to detect sections labeled as "SECTION 1:", "SECTION TWO", etc.
     section_pattern = re.compile(r"(SECTION\s*\d+[:.]?)", re.IGNORECASE)
     parts = section_pattern.split(story_text)[1:]  
 
-    for i in range(0, len(parts), 2):
+    # Ensure we don't exceed the max section count
+    section_count = min(len(parts) // 2, max_sections)
+
+    for i in range(0, section_count * 2, 2):  
         section_title = parts[i].strip().replace(":", "")
         section_content = parts[i + 1].strip() if i + 1 < len(parts) else ""
 
@@ -255,6 +281,7 @@ def split_story_into_sections(story_text):
         })
 
     return sections
+
 
 
 def generate_image_per_section(sections):
