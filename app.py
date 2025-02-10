@@ -401,6 +401,7 @@ def generate_story():
             content=full_story,
             sections=sections,
             illustrations=illustrations
+            chapter_label=chapter_label
         )
 
         logging.info("Rendering PDF with WeasyPrint...")
