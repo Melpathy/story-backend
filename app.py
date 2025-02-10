@@ -186,11 +186,37 @@ def generate_image(prompt):
 
 def translate_with_mistral(text, target_language):
     """ Uses Mistral API to translate text if not predefined. """
-    mistral_prompt = f"Translate '{text}' into {target_language}. Only return the translated word."
-    
-    mistral_response = generate_story_mistral(mistral_prompt, max_tokens=10)
-    return mistral_response.strip().capitalize()
+    try:
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {API_KEYS['mistral'].strip()}",
+            "Content-Type": "application/json"
+        }
+        
+        mistral_prompt = f"Translate '{text}' into {target_language}. Only return the translated word."
+        
+        payload = {
+            "model": "mistral-medium",
+            "messages": [
+                {"role": "system", "content": "You are a translator."},
+                {"role": "user", "content": mistral_prompt}
+            ],
+            "max_tokens": 10,
+            "temperature": 0.3
+        }
 
+        response = requests.post(url, json=payload, headers=headers)
+        response_json = response.json()
+
+        if "choices" in response_json and response_json["choices"]:
+            return response_json["choices"][0]["message"]["content"].strip().capitalize()
+        else:
+            logging.error(f"❌ Translation Error: {response_json}")
+            return "Chapter"  # Fallback to English
+
+    except Exception as e:
+        logging.error(f"❌ Translation Error: {str(e)}")
+        return "Chapter"  # Fallback to English
 
 def generate_story_mistral(prompt, chapter_label, max_tokens=800):
     """Generate a story using Mistral API with structured sections."""
@@ -383,11 +409,11 @@ def generate_story():
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
         # ✅ Generate the Full Story
-        full_story = generate_story_mistral(prompt, max_tokens=800)
+        full_story = generate_story_mistral(prompt, chapter_label, max_tokens=800)
         logging.info("Story generated successfully.")
 
         # ✅ Split into Sections
-        sections = split_story_into_sections(full_story)
+        sections = split_story_into_sections(full_story,chapter_label)
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
