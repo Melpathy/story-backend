@@ -2,7 +2,6 @@
 <html>
 <head>
     <style>
-        /* General Styles */
         body {
             font-family: 'Georgia', serif;
             line-height: 1.8;
@@ -10,35 +9,29 @@
             color: #333;
             text-align: justify;
         }
-
         h1, h2 {
             text-align: center;
             margin: 0;
             padding: 0;
         }
-
         h1 {
             font-size: 2.8em;
             color: #4A90E2;
             font-weight: bold;
         }
-
         h2 {
             font-size: 1.5em;
             margin-bottom: 30px;
             color: #333;
             font-style: italic;
         }
-
         .cover-page {
             text-align: center;
             margin-top: 3in;
         }
-
         .content {
             margin-top: 50px;
         }
-
         .chapter-title {
             text-align: center;
             font-size: 2em;
@@ -46,12 +39,10 @@
             margin-top: 50px;
             margin-bottom: 30px;
         }
-
         .section {
             margin-bottom: 40px;
             text-indent: 40px;
         }
-
         .illustration {
             width: 350px;
             height: auto;
@@ -60,7 +51,6 @@
             border-radius: 10px;
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
         }
-
         .the-end {
             text-align: center;
             font-size: 1.8em;
@@ -68,24 +58,21 @@
             margin-top: 60px;
             color: #D35400;
         }
-
         .page-break {
             page-break-before: always;
         }
     </style>
 </head>
 <body>
-    <!-- Cover Page -->
     <div class="cover-page">
         <h1>{{ title }}</h1>
         <h2>By {{ author }}</h2>
     </div>
 
-    <!-- Story Content -->
     <div class="page-break"></div>
     <div class="content">
-        {% set chapter_number = 1 %}  <!-- Initialize chapter numbering -->
-        {% for section in sections[:3] %}  <!-- Limiting to 3 sections -->
+        {% set chapter_number = 1 %}
+        {% for section in sections[:3] %}
             <p class="chapter-title">{{ chapter_label }} {{ chapter_number }}</p>
             <p class="section">{{ section['content'] }}</p>
             {% set chapter_number = chapter_number + 1 %}
@@ -93,7 +80,6 @@
         <p class="the-end">The End.</p>
     </div>
 
-    <!-- Illustrations -->
     {% if illustrations %}
         {% for illustration in illustrations %}
             <div class="page-break"></div>
