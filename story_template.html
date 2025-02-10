@@ -131,6 +131,16 @@
             margin-bottom: 30px;
             line-height: 1.8;
         }
+
+        .chapter-subtitle {
+            font-size: 1.3em;
+            color: #666;
+            margin-top: 20px;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
         
         /* Illustration styles */
         .illustration-container {
@@ -201,12 +211,14 @@
     <div class="content">
         {% for section in sections %}
         <div class="chapter">
-            <h3 class="chapter-title">{{ chapter_label }} {{ loop.index }}</h3>
-            <div class="chapter-content">
+            <div class="chapter-title">
+                {{ chapter_label }} {{ loop.index }}
                 {% if section.title %}
-                <h4 class="chapter-content-title">{{ section.title }}</h4>
+                <div class="chapter-subtitle">{{ section.title }}</div>
                 {% endif %}
-                {{ section['content'] }}
+            </div>
+            <div class="chapter-content">
+                {{ section['content'] | replace(chapter_label ~ " " ~ loop.index, "") | replace(chapter_label ~ " " ~ loop.index ~ ":", "") }}
             </div>
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
