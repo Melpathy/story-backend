@@ -58,14 +58,17 @@ def generate_pdf_task(html_content, pdf_filename):
     logging.info(f"📂 Saving PDF to: {pdf_path}")
 
     try:
+        if os.path.exists(pdf_path):  
+            os.remove(pdf_path)  # ✅ Delete old file to ensure a new one is created
+        
         HTML(string=html_content).write_pdf(pdf_path)
-        logging.info(f"✅ PDF successfully saved: {pdf_path}")
+        logging.info(f"✅ New PDF successfully saved: {pdf_path}")
 
-        # ✅ Return absolute path for Flask to use
-        return pdf_path
+        return pdf_path  # ✅ Return absolute file path
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
+
 
 
 @app.route('/task-status/<task_id>', methods=['GET'])
@@ -380,11 +383,12 @@ def download_file(filename):
     logging.info(f"🔍 Flask is looking for PDF: {pdf_path}")
 
     if not os.path.exists(pdf_path):
-        logging.error(f"❌ PDF not found: {pdf_path}")
+        logging.error(f"❌ PDF not found at: {pdf_path}")
         return jsonify({"status": "error", "message": f"File not found: {pdf_path}"}), 404
 
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
+
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
