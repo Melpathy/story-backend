@@ -73,16 +73,24 @@ def generate_pdf_task(html_content, pdf_filename):
         HTML(string=html_content).write_pdf(pdf_path)
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        # ✅ Upload to S3
+        # ✅ Debugging: Check if bucket name exists
         bucket_name = os.getenv("S3_BUCKET_NAME")
+        if not bucket_name:
+            raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
+
         s3_key = f"pdfs/{pdf_filename.strip().replace(' ', '_')}"  # Store in "pdfs/" folder
 
+        logging.info(f"📡 Uploading PDF to S3 bucket: {bucket_name}, Key: {s3_key}")
+
+        # ✅ Upload to S3
         s3_client.upload_file(pdf_path, bucket_name, s3_key, ExtraArgs={'ContentType': 'application/pdf'})
+
+        # ✅ Generate S3 URL
         s3_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{s3_key}"
 
         logging.info(f"✅ PDF uploaded to S3: {s3_url}")
 
-        return s3_url  # ✅ Return S3 URL instead of local path
+        return s3_url  # ✅ Return S3 URL instead of None
 
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
