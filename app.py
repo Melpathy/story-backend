@@ -432,6 +432,7 @@ def generate_story():
             content=full_story,
             sections=sections,
             illustrations=illustrations,
+            age=int(age),
             chapter_label=chapter_label 
         )
 
