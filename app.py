@@ -4,6 +4,7 @@ from weasyprint import HTML
 from jinja2 import Template
 from datetime import datetime
 import boto3
+from botocore.exceptions import NoCredentialsError
 import time
 import os
 import tempfile  # Use temporary files instead of keeping data in memory
@@ -38,6 +39,20 @@ s3_client = boto3.client(
     region_name=os.getenv("AWS_REGION"),
 )
 
+def generate_presigned_url(bucket_name, s3_key, expiration=86400):
+    """
+    Generate a temporary pre-signed URL for accessing private PDFs on S3.
+    """
+    try:
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': bucket_name, 'Key': s3_key},
+            ExpiresIn=expiration  # Link valid for 24 hours
+        )
+        return presigned_url
+    except NoCredentialsError:
+        return "Error: AWS credentials not found."
+        
 @app.after_request
 def add_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -59,7 +74,7 @@ API_KEYS = {
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
     """
-    Generate PDF, upload to S3, and return the S3 URL.
+    Generate PDF, upload to S3, and return a temporary pre-signed URL.
     """
 
     # ✅ Save the PDF in a temporary directory
@@ -79,25 +94,25 @@ def generate_pdf_task(html_content, pdf_filename):
         if not bucket_name:
             raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
 
-        s3_key = f"pdfs/{pdf_filename.strip().replace(' ', '_')}"  # Store in "pdfs/" folder
+        # ✅ Store PDFs with timestamps
+        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')  # Example: "2025-02-10"
+        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
 
         logging.info(f"📡 Uploading PDF to S3 bucket: {bucket_name}, Key: {s3_key}")
 
         # ✅ Upload to S3
-        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')  # Example: "2025-02-10"
-        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
+        s3_client.upload_file(pdf_path, bucket_name, s3_key, ExtraArgs={'ContentType': 'application/pdf'})
 
+        # ✅ Generate Pre-Signed URL
+        presigned_url = generate_presigned_url(bucket_name, s3_key, expiration=86400)  # 24 hours
+        logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
 
-        # ✅ Generate S3 URL
-        s3_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{s3_key}"
-
-        logging.info(f"✅ PDF uploaded to S3: {s3_url}")
-
-        return s3_url  # ✅ Return S3 URL instead of None
+        return presigned_url  # ✅ Return the temporary URL instead of a permanent S3 link
 
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
+
         
 
 @app.route('/task-status/<task_id>', methods=['GET'])
@@ -315,14 +330,17 @@ def generate_story():
 
         # ✅ Handle Bilingual Mode
         if bilingual_mode:
-            if bilingual_language and bilingual_language.lower() == "other-bilingual" and custom_bilingual_language:
+            if custom_bilingual_language:
                 prompt += f" The story should be written in both English and {custom_bilingual_language}."
-            elif bilingual_language:
+            elif bilingual_language and bilingual_language.lower() != "english":
                 prompt += f" The story should be written in both English and {bilingual_language}."
-
+        
         # ✅ Handle Custom Story Language
-        if story_language and story_language.lower() == "other-language" and custom_language:
-            prompt += f" The story should be written in {custom_language}."
+        elif story_language and story_language.lower() != "english":
+            if story_language.lower() == "other-language" and custom_language:
+                prompt += f" The story should be written in {custom_language}."
+            else:
+                prompt += f" The story should be written in {story_language}."
 
         log_memory_usage("Before Mistral API")
 
