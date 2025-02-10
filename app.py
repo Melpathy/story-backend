@@ -285,16 +285,25 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
     section_count = min(len(parts) // 2, max_sections)
 
     for i in range(0, section_count * 2, 2):  
-        section_title = parts[i].strip().replace(":", "")
-        section_content = parts[i + 1].strip() if i + 1 < len(parts) else ""
+        chapter_content = parts[i + 1].strip() if i + 1 < len(parts) else ""
+        
+        # Extract the chapter title from the first line of content
+        content_lines = chapter_content.split('\n', 1)
+        if len(content_lines) > 1:
+            chapter_title = content_lines[0].strip()
+            main_content = content_lines[1].strip()
+        else:
+            chapter_title = ""
+            main_content = chapter_content
 
         # Generate a short summary for illustrations
-        summary_prompt = f"Summarize this section in 2-3 sentences for an illustration: {section_content}"
+        summary_prompt = f"Summarize this section in 2-3 sentences for an illustration: {main_content}"
         summary = generate_story_mistral(summary_prompt, chapter_label, max_tokens=50)
 
         sections.append({
-            "title": section_title,
-            "content": section_content,
+            "chapter_number": parts[i].strip().replace(":", ""),
+            "title": chapter_title,
+            "content": main_content,
             "summary": summary
         })
 
