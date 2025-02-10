@@ -305,7 +305,25 @@ def generate_story():
         data = request.get_json()
         logging.info(f"Received Data: {data}")  # Debugging
 
-        # ✅ Extract Fields (Using default values for missing fields)
+        # ✅ Extract Language Fields
+        story_language = data.get('story-language', 'English').lower()  # Ensure story_language is assigned
+        selected_language = story_language if story_language else "english"
+
+        # ✅ Predefined Chapter Labels
+        chapter_labels = {
+            "english": "Chapter",
+            "french": "Chapitre",
+            "spanish": "Capítulo",
+            "german": "Kapitel"
+        }
+
+        # ✅ Assign Chapter Label (Translate if necessary)
+        if selected_language in chapter_labels:
+            chapter_label = chapter_labels[selected_language]
+        else:
+            chapter_label = translate_with_mistral("Chapter", selected_language)  # Use Mistral if not predefined
+
+        # ✅ Extract Other Story Fields
         child_name = data.get('childName', 'child')
         age = data.get('age', 7)
         character_type = data.get('character-type', 'Boy')
@@ -321,10 +339,6 @@ def generate_story():
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
         surprise_ending = str(data.get('surprise-ending', 'false')).strip().lower() == 'true'
-        
-        story_language = request.json.get('story-language', 'English').lower()  
-        selected_language = story_language if story_language else "english"
-        
         custom_language = data.get('custom-language', None)
         bilingual_mode = str(data.get('bilingual-mode', 'false')).strip().lower() == 'true'
         bilingual_language = data.get('bilingual-language', 'English')
@@ -389,7 +403,6 @@ def generate_story():
 
         # ✅ Generate Images for Each Section
         illustrations = []  # Empty list to avoid errors
-        # illustrations = generate_image_per_section(sections)
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
@@ -404,7 +417,7 @@ def generate_story():
             content=full_story,
             sections=sections,
             illustrations=illustrations,
-            chapter_label=chapter_label
+            chapter_label=chapter_label  # ✅ Now safely passed to template
         )
 
         logging.info("Rendering PDF with WeasyPrint...")
@@ -438,7 +451,6 @@ def generate_story():
     finally:
         gc.collect()
         log_memory_usage("After Request Cleanup")
-
 
 
 # ✅ Add the new download route BELOW the generate-story function
