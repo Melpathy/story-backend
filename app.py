@@ -45,30 +45,38 @@ API_KEYS = {
     "replicate": os.getenv("REPLICATE_API_TOKEN")
 }
 
+
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
-    """Background task to generate PDFs without blocking API, ensuring it saves properly."""
+    """
+    Background task to generate PDFs asynchronously, ensuring proper saving in a shared directory.
+    """
     
-    pdf_dir = "/tmp"
+    # Define a shared directory accessible by both Flask and Celery
+    pdf_dir = "/home/render/pdfs"
     os.makedirs(pdf_dir, exist_ok=True)  # ✅ Ensure directory exists
 
-    pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))  # ✅ Fix filename issues
-    
-    logging.info(f"🔍 Creating directory (if not exists): {pdf_dir}")
-    logging.info(f"📂 Saving PDF to: {pdf_path}")
+    # Sanitize filename and construct full PDF path
+    sanitized_filename = pdf_filename.strip().replace(' ', '_')
+    pdf_path = os.path.join(pdf_dir, sanitized_filename)
+
+    logging.info(f"🔍 Ensuring directory exists: {pdf_dir}")
+    logging.info(f"📂 Target PDF path: {pdf_path}")
 
     try:
-        if os.path.exists(pdf_path):  
-            os.remove(pdf_path)  # ✅ Delete old file to ensure a new one is created
-        
+        # Remove old file if it exists to avoid conflicts
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+            logging.info(f"🗑️ Old PDF removed: {pdf_path}")
+
+        # Generate and save new PDF
         HTML(string=html_content).write_pdf(pdf_path)
-        logging.info(f"✅ New PDF successfully saved: {pdf_path}")
+        logging.info(f"✅ PDF successfully generated: {pdf_path}")
 
-        return pdf_path  # ✅ Return absolute file path
+        return pdf_path  # ✅ Return absolute file path for Flask
     except Exception as e:
-        logging.error(f"❌ PDF Generation Failed: {str(e)}")
+        logging.error(f"❌ PDF Generation Failed: {e}")
         return None
-
 
 
 @app.route('/task-status/<task_id>', methods=['GET'])
@@ -378,17 +386,24 @@ def generate_story():
 # ✅ Add the new download route BELOW the generate-story function
 @app.route('/download/<filename>')
 def download_file(filename):
-    pdf_path = f"/tmp/{filename.strip().replace(' ', '_')}"  # ✅ Ensure filename is formatted correctly
+    """
+    Endpoint to serve the generated PDF file, ensuring it is retrieved from the shared directory.
+    """
 
-    logging.info(f"🔍 Flask is looking for PDF: {pdf_path}")
+    # Define shared directory where PDFs are stored
+    pdf_dir = "/home/render/pdfs"
+    sanitized_filename = filename.strip().replace(' ', '_')
+    pdf_path = os.path.join(pdf_dir, sanitized_filename)  # ✅ Ensure filename is formatted correctly
 
+    logging.info(f"🔍 Flask is searching for PDF: {pdf_path}")
+
+    # Check if the file exists before attempting to serve it
     if not os.path.exists(pdf_path):
         logging.error(f"❌ PDF not found at: {pdf_path}")
-        return jsonify({"status": "error", "message": f"File not found: {pdf_path}"}), 404
+        return jsonify({"status": "error", "message": f"File not found: {filename}"}), 404
 
     logging.info(f"✅ Serving PDF: {pdf_path}")
     return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
-
 
 
 # ✅ Ensure this runs at the bottom of your script (if applicable)
