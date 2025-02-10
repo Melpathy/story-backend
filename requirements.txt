@@ -9,3 +9,4 @@ mistralai
 flask-cors
 celery
 redis
+boto3
