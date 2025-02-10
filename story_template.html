@@ -127,7 +127,7 @@
         .chapter-number {
             text-align: center;
             font-size: 1.6em; 
-            color: #2E86C1;
+            color: #333;
             margin-bottom: 30px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-family: 'Georgia', serif;
@@ -184,7 +184,7 @@
             text-align: center;
             color: #4A90E2;
             font-size: 1.5em;
-            margin-bottom: 20px;
+            margin-bottom: 30px 0 50px 0;
         }
         
         /* End page styles */
@@ -198,6 +198,14 @@
             font-family: 'Georgia', serif;
             font-style: italic;
         }
+        
+        /* Regular page content (non-chapter) */
+        .content-section {
+            margin-top: 50px;  /* Space after star */
+            padding: 0 20px;
+        }
+
+
         
         /* Decorative elements */
         .chapter::before {
@@ -234,10 +242,7 @@
     <!-- Story Content -->
     <div class="content">
         {% for section in sections %}
-        <div class="chapter">
-            <!-- Star decoration -->
-            <div class="star-decoration">✧</div>
-            
+        <div class="chapter">        
              
             <!-- Chapter number -->
             <div class="chapter-number">
@@ -263,6 +268,14 @@
         {% endfor %}
     </div>
 
+
+    <!-- For non-chapter pages -->
+    <div class="content-section">
+        <!-- Star at top -->
+        <div class="star-decoration">✧</div>
+    </div>
+
+    
     <!-- End Page -->
     <div class="the-end">
         The End
