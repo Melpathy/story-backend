@@ -140,8 +140,8 @@
             font-style: italic;
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
-        }
-        
+        }    
+            
         /* Illustration styles */
         .illustration-container {
             text-align: center;
@@ -211,12 +211,20 @@
     <div class="content">
         {% for section in sections %}
         <div class="chapter">
-            <div class="chapter-title">
+            <!-- Star decoration -->
+            <div class="star-decoration">✧</div>
+            
+             
+            <!-- Chapter number -->
+            <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
-                {% if section.title %}
-                <div class="chapter-subtitle">{{ section.title }}</div>
-                {% endif %}
             </div>
+    
+            <!-- Chapter title -->
+            <div class="chapter-title">
+                {{ section.title }}
+            </div>    
+            
             <div class="chapter-content">
                 {{ section['content'] | replace(chapter_label ~ " " ~ loop.index, "") | replace(chapter_label ~ " " ~ loop.index ~ ":", "") }}
             </div>
