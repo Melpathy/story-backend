@@ -226,7 +226,7 @@
             </div>    
             
             <div class="chapter-content">
-                {{ section['content'] | replace(chapter_label ~ " " ~ loop.index, "") | replace(chapter_label ~ " " ~ loop.index ~ ":", "") }}
+                {{ section.content }}
             </div>
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
