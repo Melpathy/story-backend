@@ -191,23 +191,6 @@ def translate_with_mistral(text, target_language):
     mistral_response = generate_story_mistral(mistral_prompt, max_tokens=10)
     return mistral_response.strip().capitalize()
 
-# Predefined Chapter Labels
-chapter_labels = {
-    "english": "Chapter",
-    "french": "Chapitre",
-    "spanish": "Capítulo",
-    "german": "Kapitel"
-}
-
-# Detect Selected Language
-selected_language = story_language.lower() if story_language else "english"
-
-# Use Predefined Translation or Translate with Mistral
-if selected_language in chapter_labels:
-    chapter_label = chapter_labels[selected_language]
-else:
-    chapter_label = translate_with_mistral("Chapter", selected_language)
-
 
 def generate_story_mistral(prompt, max_tokens=800):
     """Generate a story using Mistral API with structured sections."""
