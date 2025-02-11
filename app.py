@@ -58,16 +58,44 @@ replicate_client = replicate.Client(api_token=API_KEYS["replicate"])
 # Initialize Story Generator
 story_generator = StoryGenerator(API_KEYS["mistral"], replicate_client)
 
-def generate_presigned_url(bucket_name, s3_key):
-    """Generate a temporary pre-signed URL for accessing private PDFs on S3."""
+def generate_presigned_url(bucket_name, s3_key, expiration=3600):
+    """
+    Generate a temporary pre-signed URL for accessing private PDFs on S3.
+    Args:
+        bucket_name (str): Name of the S3 bucket
+        s3_key (str): Key of the object in S3
+        expiration (int): URL expiration time in seconds (default: 1 hour)
+    """
     try:
+        # Ensure expiration is an integer
+        expiration = int(expiration)
+        
+        # Generate the pre-signed URL
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': s3_key
+            },
+            ExpiresIn=expiration
+        )
+        logging.info(f"✅ Generated pre-signed URL with {expiration}s expiration")
+        return presigned_url
+    except ValueError as e:
+        logging.error(f"❌ Invalid expiration value: {str(e)}")
+        # Fallback to 1 hour if there's an issue with the expiration value
         return s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': bucket_name, 'Key': s3_key},
-            ExpiresIn=API_CONFIG['URL_EXPIRATION']
+            ExpiresIn=3600
         )
     except NoCredentialsError:
-        return "Error: AWS credentials not found."
+        logging.error("❌ AWS credentials not found")
+        return None
+    except Exception as e:
+        logging.error(f"❌ Error generating pre-signed URL: {str(e)}")
+        return None
+
 
 @app.after_request
 def add_headers(response):
