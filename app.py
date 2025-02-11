@@ -111,16 +111,12 @@ def add_headers(response):
 
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
-    """
-    Generate PDF, upload to S3, and return a temporary pre-signed URL.
-    """
+    """Generate PDF, upload to S3, and return a temporary pre-signed URL."""
     try:
         # Create temp directory if it doesn't exist
         pdf_dir = "/tmp"
         os.makedirs(pdf_dir, exist_ok=True)
         pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
-
-        logging.info(f"📂 Generating PDF at: {pdf_path}")
 
         # Generate PDF
         HTML(string=html_content).write_pdf(pdf_path)
@@ -131,42 +127,39 @@ def generate_pdf_task(html_content, pdf_filename):
         if not bucket_name:
             raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
 
-        # Generate S3 key with date prefix
+        # Generate S3 key
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
 
-        logging.info(f"📡 Uploading PDF to S3 bucket: {bucket_name}, Key: {s3_key}")
-
-        # Upload to S3 with content type
+        # Upload to S3 with specific content headers
         s3_client.upload_file(
             pdf_path, 
             bucket_name, 
             s3_key, 
             ExtraArgs={
                 'ContentType': 'application/pdf',
-                'ContentDisposition': f'attachment; filename="{pdf_filename}"'
+                'ContentDisposition': 'inline'  # This tells browsers to display the PDF
             }
         )
 
-        # Generate pre-signed URL with 1-hour expiration
-        presigned_url = generate_presigned_url(bucket_name, s3_key, expiration=3600)
-        
-        if not presigned_url:
-            raise Exception("Failed to generate pre-signed URL")
+        # Generate pre-signed URL
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': s3_key,
+                'ResponseContentType': 'application/pdf',
+                'ResponseContentDisposition': 'inline'
+            },
+            ExpiresIn=3600
+        )
 
-        logging.info(f"✅ Pre-signed URL generated successfully")
+        logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
         return presigned_url
 
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
-    finally:
-        # Cleanup: Remove temporary PDF file
-        try:
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
-        except Exception as e:
-            logging.error(f"❌ Failed to cleanup temporary PDF: {str(e)}")
           
 
 @app.route('/task-status/<task_id>', methods=['GET'])
@@ -275,11 +268,8 @@ def generate_story():
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    """
-    Redirect to S3 pre-signed URL for PDF viewing/download.
-    """
+    """Redirect to S3 pre-signed URL for PDF viewing."""
     try:
-        # Get S3 bucket name
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
             raise ValueError("S3_BUCKET_NAME environment variable is missing!")
@@ -288,11 +278,19 @@ def download_file(filename):
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
 
-        # Generate a fresh pre-signed URL
-        presigned_url = generate_presigned_url(bucket_name, s3_key, expiration=3600)  # 1 hour expiration
+        # Generate pre-signed URL with inline content disposition
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': s3_key,
+                'ResponseContentType': 'application/pdf',
+                'ResponseContentDisposition': 'inline'
+            },
+            ExpiresIn=3600
+        )
 
         if presigned_url:
-            # Redirect to the pre-signed URL
             return redirect(presigned_url)
         else:
             return jsonify({
@@ -304,7 +302,7 @@ def download_file(filename):
         logging.error(f"❌ Error serving PDF: {str(e)}")
         return jsonify({
             "status": "error",
-            "message": f"Error serving PDF: {str(e)}"
+            "message": str(e)
         }), 500
 
 if __name__ == "__main__":
