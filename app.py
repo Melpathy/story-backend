@@ -291,6 +291,8 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
         content_lines = chapter_content.split('\n', 1)
         if len(content_lines) > 1:
             chapter_title = content_lines[0].strip()
+            chapter_title = re.sub(r'\*\*.*?\*\*', '', chapter_title).strip()
+            chapter_title = re.sub(rf'{chapter_label}\s*\d+\s*:?\s*', '', chapter_title, flags=re.IGNORECASE).strip()
             main_content = content_lines[1].strip()
         else:
             chapter_title = ""
@@ -301,7 +303,6 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
         summary = generate_story_mistral(summary_prompt, chapter_label, max_tokens=50)
 
         sections.append({
-            "chapter_number": parts[i].strip().replace(":", ""),
             "title": chapter_title,
             "content": main_content,
             "summary": summary
