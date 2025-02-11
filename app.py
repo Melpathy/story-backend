@@ -452,7 +452,7 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = generate_image_per_section(sections, story_language) # [] for empty
+        illustrations = [] # [] for empty - generate_image_per_section(sections, story_language)
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
