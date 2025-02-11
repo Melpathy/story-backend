@@ -97,7 +97,7 @@ class StoryGenerator:
         chapter_regex = re.compile(rf"({chapter_label}\s*\d+[:.]?)", re.IGNORECASE)
         parts = chapter_regex.split(story_text)[1:]
         
-        # Get target sections from config
+        # Get target sections from config instead of using self.max_sections
         target_sections = STORY_LENGTH_CONFIG[story_length]["target_sections"]
         section_count = min(len(parts) // 2, target_sections)
         
