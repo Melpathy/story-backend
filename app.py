@@ -201,6 +201,7 @@ def generate_story():
     try:
         # Get request data
         data = request.get_json()
+        story_length = data.get('story_length', 'short')
         logging.info(f"Received Data: {data}")
 
         # Setup language configuration
@@ -221,7 +222,12 @@ def generate_story():
 
         # Generate story
         log_memory_usage("Before Story Generation")
-        full_story = story_generator.generate_story(prompt, formatted_lang['chapter_label'])
+        # When generating story, pass the length parameter
+        full_story = story_generator.generate_story(
+            prompt, 
+            formatted_lang['chapter_label'],
+            story_length=story_length
+        )
         
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
