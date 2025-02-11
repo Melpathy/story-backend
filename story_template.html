@@ -261,7 +261,7 @@
             <div class="illustration-container">
                 <img src="{{ illustrations[loop.index0] }}" class="illustration" 
                      alt="Illustration for {{ chapter_label }} {{ loop.index }}">
-                <p class="illustration-caption">Illustration for {{ chapter_label }} {{ loop.index }}</p>
+                <p class="illustration-caption">{{ illustrations[loop.index0].caption }}</p>
             </div>
             {% endif %}
         </div>
