@@ -139,7 +139,8 @@ class StoryGenerator:
     def _generate_summary(self, content):
         """Generate summary for illustrations."""
         summary_prompt = f"Summarize this section in 2-3 sentences for an illustration: {content}"
-        return self.generate_story(summary_prompt, "Summary", max_tokens=50)
+        # Change this to use story_length="short" instead of max_tokens
+        return self.generate_story(summary_prompt, "Summary", story_length="short")
 
     def generate_illustration(self, prompt):
         """Generate illustration using Replicate."""
