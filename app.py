@@ -195,6 +195,14 @@ def get_task_status(task_id):
         "message": formatted_lang['processing_message']
     })
 
+def extract_moral(story_text):
+    """Extract moral from story text."""
+    lines = story_text.split('\n')
+    for line in lines:
+        if line.strip().lower().startswith('✨ moral:'):
+            return line.strip()
+    return None
+
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
     """Handle story and PDF generation request."""
@@ -228,6 +236,9 @@ def generate_story():
             formatted_lang['chapter_label'],
             story_length=story_length
         )
+
+        # Extract moral here, after story generation
+        moral = extract_moral(full_story)
         
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
@@ -247,7 +258,8 @@ def generate_story():
             age=int(data.get('age', 7)),
             chapter_label=formatted_lang['chapter_label'],
             end_text=formatted_lang['end_text'],
-            no_illustrations_text=formatted_lang['no_illustrations']
+            no_illustrations_text=formatted_lang['no_illustrations'],
+            moral=moral
         )
 
         # Queue PDF generation task
@@ -271,6 +283,7 @@ def generate_story():
     finally:
         gc.collect()
         log_memory_usage("After Request Cleanup")
+
 
 @app.route('/download/<filename>')
 def download_file(filename):
