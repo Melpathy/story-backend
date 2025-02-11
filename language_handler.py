@@ -2,6 +2,7 @@ import logging
 import requests
 import os
 import re
+import json
 
 # Language configuration dictionary
 LANGUAGE_CONFIG = {
@@ -60,7 +61,7 @@ LANGUAGE_CONFIG = {
 }
 
 def translate_with_mistral(text, target_language):
-    """Uses Mistral API to translate text."""
+    """Uses Mistral API to translate text with JSON output."""
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
@@ -68,30 +69,53 @@ def translate_with_mistral(text, target_language):
             "Content-Type": "application/json"
         }
         
-        # Modified prompt to avoid translation notes
-        mistral_prompt = f"Translate this text to {target_language}, return ONLY the translation without any notes or explanations: '{text}'"
-        
         payload = {
             "model": "mistral-medium",
             "messages": [
-                {"role": "system", "content": "You are a translator. Only return the direct translation without any notes, explanations, or formatting."},
-                {"role": "user", "content": mistral_prompt}
+                {
+                    "role": "system", 
+                    "content": "You are a translator. Return translations in JSON format with a single key 'translation' containing the translated text."
+                },
+                {
+                    "role": "user", 
+                    "content": f"Translate the following to {target_language} and return ONLY a JSON object with the translation: '{text}'"
+                }
             ],
-            "max_tokens": 10,
-            "temperature": 0.3
+            "max_tokens": 50,
+            "temperature": 0.1
         }
 
         response = requests.post(url, json=payload, headers=headers)
         response_json = response.json()
 
         if "choices" in response_json and response_json["choices"]:
-            translation = response_json["choices"][0]["message"]["content"].strip()
-            # Remove any "note:", "translation:", or similar prefixes
-            translation = re.sub(r'^(Note:|Translation:|[^a-zA-Z0-9\s]*\s*)*', '', translation, flags=re.IGNORECASE)
-            return translation.strip()
-        else:
-            logging.error(f"Translation Error: {response_json}")
-            return text  # Return original text if translation fails
+            try:
+                # Try to parse the response as JSON
+                content = response_json["choices"][0]["message"]["content"].strip()
+                translation_data = json.loads(content)
+                
+                # Extract just the translation from the JSON
+                if isinstance(translation_data, dict) and "translation" in translation_data:
+                    return translation_data["translation"]
+                
+            except json.JSONDecodeError:
+                # If JSON parsing fails, try to clean up the response
+                content = response_json["choices"][0]["message"]["content"].strip()
+                # Remove any non-JSON text
+                if '"translation"' in content:
+                    try:
+                        # Try to extract just the JSON part
+                        json_start = content.find('{')
+                        json_end = content.rfind('}') + 1
+                        if json_start >= 0 and json_end > json_start:
+                            json_str = content[json_start:json_end]
+                            translation_data = json.loads(json_str)
+                            if "translation" in translation_data:
+                                return translation_data["translation"]
+                    except:
+                        pass
+                
+        return text  # Fallback to original text
 
     except Exception as e:
         logging.error(f"Translation Error: {str(e)}")
