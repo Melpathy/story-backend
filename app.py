@@ -261,7 +261,9 @@ def generate_story():
             chapter_label=formatted_lang['chapter_label'],
             end_text=formatted_lang['end_text'],
             no_illustrations_text=formatted_lang['no_illustrations'],
-            moral=moral
+            moral=moral,
+            moral_label=formatted_lang['moral_label'],
+
         )
 
         # Queue PDF generation task
