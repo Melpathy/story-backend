@@ -303,6 +303,7 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
         summary = generate_story_mistral(summary_prompt, chapter_label, max_tokens=50)
 
         sections.append({
+            "chapter_number": "Chapitre 1",
             "title": chapter_title,
             "content": main_content,
             "summary": summary
