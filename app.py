@@ -195,15 +195,6 @@ def get_task_status(task_id):
         "message": formatted_lang['processing_message']
     })
 
-def extract_moral(story_text):
-    """Extract moral from story text."""
-    lines = story_text.split('\n')
-    for line in lines:
-        line = line.strip()
-        if line.lower().startswith('moral:') or line.lower().startswith('morale:'):
-            # Remove the "Moral:" prefix and strip whitespace
-            return line.split(':', 1)[1].strip()
-    return None
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -239,8 +230,6 @@ def generate_story():
             story_length=story_length
         )
 
-        # Extract moral here, after story generation
-        moral = extract_moral(full_story)
         
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
@@ -260,10 +249,7 @@ def generate_story():
             age=int(data.get('age', 7)),
             chapter_label=formatted_lang['chapter_label'],
             end_text=formatted_lang['end_text'],
-            no_illustrations_text=formatted_lang['no_illustrations'],
-            moral=moral,
-            moral_label=formatted_lang['moral_label'],
-
+            no_illustrations_text=formatted_lang['no_illustrations'],           
         )
 
         # Queue PDF generation task
