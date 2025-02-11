@@ -1,6 +1,7 @@
 import logging
 import requests
 import os
+import re
 
 # Language configuration dictionary
 LANGUAGE_CONFIG = {
@@ -59,7 +60,7 @@ LANGUAGE_CONFIG = {
 }
 
 def translate_with_mistral(text, target_language):
-    """Uses Mistral API to translate text if not predefined."""
+    """Uses Mistral API to translate text."""
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
@@ -67,12 +68,13 @@ def translate_with_mistral(text, target_language):
             "Content-Type": "application/json"
         }
         
-        mistral_prompt = f"Translate '{text}' into {target_language}. Only return the translated word."
+        # Modified prompt to avoid translation notes
+        mistral_prompt = f"Translate this text to {target_language}, return ONLY the translation without any notes or explanations: '{text}'"
         
         payload = {
             "model": "mistral-medium",
             "messages": [
-                {"role": "system", "content": "You are a translator."},
+                {"role": "system", "content": "You are a translator. Only return the direct translation without any notes, explanations, or formatting."},
                 {"role": "user", "content": mistral_prompt}
             ],
             "max_tokens": 10,
@@ -83,14 +85,18 @@ def translate_with_mistral(text, target_language):
         response_json = response.json()
 
         if "choices" in response_json and response_json["choices"]:
-            return response_json["choices"][0]["message"]["content"].strip().capitalize()
+            translation = response_json["choices"][0]["message"]["content"].strip()
+            # Remove any "note:", "translation:", or similar prefixes
+            translation = re.sub(r'^(Note:|Translation:|[^a-zA-Z0-9\s]*\s*)*', '', translation, flags=re.IGNORECASE)
+            return translation.strip()
         else:
-            logging.error(f"❌ Translation Error: {response_json}")
-            return text  # Fallback to original text
+            logging.error(f"Translation Error: {response_json}")
+            return text  # Return original text if translation fails
 
     except Exception as e:
-        logging.error(f"❌ Translation Error: {str(e)}")
-        return text  # Fallback to original text
+        logging.error(f"Translation Error: {str(e)}")
+        return text  # Return original text if translation fails
+        
 
 def get_language_config(language='english', custom_language=None):
     """Get language configuration based on selected language."""
