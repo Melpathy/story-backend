@@ -14,6 +14,7 @@ LANGUAGE_CONFIG = {
         "loading_message": "Your story is being generated...",
         "error_message": "An error occurred while generating your story.",
         "success_message": "PDF successfully generated!",
+        "moral_label": "Moral",
         "processing_message": "Task is in progress."
     },
     "french": {
@@ -26,6 +27,7 @@ LANGUAGE_CONFIG = {
         "loading_message": "Votre histoire est en cours de génération...",
         "error_message": "Une erreur s'est produite lors de la génération de votre histoire.",
         "success_message": "PDF généré avec succès !",
+        "moral_label": "Morale",
         "processing_message": "La tâche est en cours."
     },
     "spanish": {
@@ -38,6 +40,7 @@ LANGUAGE_CONFIG = {
         "loading_message": "Tu historia se está generando...",
         "error_message": "Ocurrió un error al generar tu historia.",
         "success_message": "¡PDF generado exitosamente!",
+        "moral_label": "Moraleja",
         "processing_message": "La tarea está en progreso."
     },
     "german": {
@@ -50,6 +53,7 @@ LANGUAGE_CONFIG = {
         "loading_message": "Deine Geschichte wird generiert...",
         "error_message": "Bei der Generierung deiner Geschichte ist ein Fehler aufgetreten.",
         "success_message": "PDF erfolgreich generiert!",
+        "moral_label": "Moral",
         "processing_message": "Aufgabe wird bearbeitet."
     }
 }
