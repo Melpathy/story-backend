@@ -1,6 +1,6 @@
 import logging
 import requests
-from config import API_CONFIG, IMAGE_CONFIG
+from config import API_CONFIG, IMAGE_CONFIG, STORY_LENGTH_CONFIG
 import re
 
 class StoryGenerator:
