@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, send_file
 from weasyprint import HTML
 from jinja2 import Template
 from datetime import datetime
+from language_handler import get_language_config, format_language_strings
 import boto3
 from botocore.exceptions import NoCredentialsError
 import time
@@ -119,25 +120,35 @@ def generate_pdf_task(html_content, pdf_filename):
 def get_task_status(task_id):
     """Check Celery task status and return S3 URL if ready."""
     task = generate_pdf_task.AsyncResult(task_id)
+    
+    # Get default English messages (since we don't have language context here)
+    lang_config = get_language_config('english')
+    formatted_lang = format_language_strings(lang_config, {'name': '', 'author': ''})
 
     if task.state == "PENDING":
-        return jsonify({"status": "pending", "message": "PDF is still being generated."})
+        return jsonify({
+            "status": "pending", 
+            "message": formatted_lang['loading_message']
+        })
 
     elif task.state == "SUCCESS":
-        s3_url = task.result  # ✅ Get S3 URL
+        s3_url = task.result
         if s3_url:
             return jsonify({
                 "status": "completed",
                 "pdf_url": s3_url,
-                "message": f"PDF successfully generated! Download here: {s3_url}"
+                "message": formatted_lang['success_message']
             })
         else:
-            return jsonify({"status": "error", "message": "Task completed but no PDF URL found."}), 500
+            return jsonify({
+                "status": "error", 
+                "message": formatted_lang['error_message']
+            }), 500
 
-    elif task.state == "FAILURE":
-        return jsonify({"status": "failed", "message": "Task failed. Please try again."}), 500
-
-    return jsonify({"status": task.state, "message": "Task is in progress."})
+    return jsonify({
+        "status": task.state, 
+        "message": formatted_lang['processing_message']
+    })
 
 
 # Validate API Keys
@@ -184,40 +195,9 @@ def generate_image(prompt):
         logging.error(f"❌ Error generating image: {str(e)}")
         return None  # Return None instead of crashing
 
-def translate_with_mistral(text, target_language):
-    """ Uses Mistral API to translate text if not predefined. """
-    try:
-        url = "https://api.mistral.ai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {API_KEYS['mistral'].strip()}",
-            "Content-Type": "application/json"
-        }
-        
-        mistral_prompt = f"Translate '{text}' into {target_language}. Only return the translated word."
-        
-        payload = {
-            "model": "mistral-medium",
-            "messages": [
-                {"role": "system", "content": "You are a translator."},
-                {"role": "user", "content": mistral_prompt}
-            ],
-            "max_tokens": 10,
-            "temperature": 0.3
-        }
 
-        response = requests.post(url, json=payload, headers=headers)
-        response_json = response.json()
 
-        if "choices" in response_json and response_json["choices"]:
-            return response_json["choices"][0]["message"]["content"].strip().capitalize()
-        else:
-            logging.error(f"❌ Translation Error: {response_json}")
-            return "Chapter"  # Fallback to English
-
-    except Exception as e:
-        logging.error(f"❌ Translation Error: {str(e)}")
-        return "Chapter"  # Fallback to English
-
+# In generate_story_mistral function, update to use the language config:
 def generate_story_mistral(prompt, chapter_label, max_tokens=800):
     """Generate a story using Mistral API with structured sections."""
     try:
@@ -226,11 +206,11 @@ def generate_story_mistral(prompt, chapter_label, max_tokens=800):
             "Authorization": f"Bearer {API_KEYS['mistral'].strip()}",
             "Content-Type": "application/json"
         }
-
-        # Dynamically adjust tokens to control section size
-        max_sections = 3  # Limit to 3 sections
         
-        # Add chapter formatting instructions to prompt
+        # Define max_sections here
+        max_sections = 3  # Move this constant to the top of the file if used elsewhere
+        
+        # Keep the formatting instructions but use the provided chapter_label
         formatted_prompt = f"""{prompt}
         Structure the story into exactly {max_sections} chapters.
         Clearly label each chapter as "{chapter_label} X:". Ensure chapters are balanced in length.
@@ -312,8 +292,8 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
     return sections
 
 
-
-def generate_image_per_section(sections, story_language='english'):
+# In generate_image_per_section function, use the language config:
+def generate_image_per_section(sections, formatted_lang):
     """Generates an image and a pure descriptive caption for each section."""
     illustrations = []
     
@@ -322,8 +302,8 @@ def generate_image_per_section(sections, story_language='english'):
         illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
 
-        # Generate a brief descriptive caption
-        caption_prompt = f"""Write a single descriptive phrase (maximum 8 words) in {story_language} that captures this scene: {section['summary']}.
+        # Use formatted_lang for language-aware caption generation
+        caption_prompt = f"""Write a single descriptive phrase (maximum 8 words) that captures this scene: {section['summary']}.
         IMPORTANT:
         - Describe only what's happening in the scene
         - Keep it short and direct
@@ -331,7 +311,7 @@ def generate_image_per_section(sections, story_language='english'):
         
         caption = generate_story_mistral(
             caption_prompt, 
-            "Caption", 
+            formatted_lang['illustration_label'],  # Use the language-specific label
             max_tokens=15
         ).strip().split('\n')[0]
         
@@ -356,24 +336,21 @@ def generate_story():
         data = request.get_json()
         logging.info(f"Received Data: {data}")  # Debugging
 
-        # ✅ Extract Language Fields - MOVED TO TOP
-        story_language = data.get('story-language', 'English').lower()  # Ensure story_language is assigned
-        selected_language = story_language if story_language else "english"
-
-        # ✅ Predefined Chapter Labels
-        chapter_labels = {
-            "english": "Chapter",
-            "french": "Chapitre",
-            "spanish": "Capítulo",
-            "german": "Kapitel"
+        # ✅ Extract Language Fields and Setup Language Configuration
+        story_language = data.get('story-language', 'English').lower()
+        custom_language = data.get('custom-language', None)
+        
+        # Get language configuration
+        lang_config = get_language_config(story_language, custom_language)
+        
+        # Format language strings with context
+        context = {
+            'name': data.get('childName', 'child'),
+            'author': data.get('childName', 'child')
         }
+        formatted_lang = format_language_strings(lang_config, context)
 
-        # ✅ Assign Chapter Label (Translate if necessary)
-        chapter_label = chapter_labels.get(selected_language)
-        if not chapter_label:
-            chapter_label = translate_with_mistral("Chapter", selected_language)
-
-        # ✅ Extract Other Story Fields
+        # ✅ Extract Story Fields
         child_name = data.get('childName', 'child')
         age = data.get('age', 7)
         character_type = data.get('character-type', 'Boy')
@@ -382,17 +359,21 @@ def generate_story():
 
         # ✅ Ensure "moralLesson" is always a list
         moral_lesson = data.get("moralLesson", [])
-        if isinstance(moral_lesson, str):  # Convert single values into a list
+        if isinstance(moral_lesson, str):
             moral_lesson = [moral_lesson]
 
+        # ✅ Extract Customization Fields
         toggle_customization = data.get('toggle-customization', 'no').strip().lower() == 'yes'
         story_genre = data.get('story-genre', 'Fantasy')
         story_tone = data.get('story-tone', 'Lighthearted')
         surprise_ending = str(data.get('surprise-ending', 'false')).strip().lower() == 'true'
-        custom_language = data.get('custom-language', None)
+        
+        # ✅ Extract Language Settings
         bilingual_mode = str(data.get('bilingual-mode', 'false')).strip().lower() == 'true'
         bilingual_language = data.get('bilingual-language', 'English')
         custom_bilingual_language = data.get('custom-bilingual-language', None)
+        
+        # ✅ Extract Character Details
         best_friend = data.get('best-friend', None)
         pet_name = data.get('pet-name', None)
 
@@ -444,15 +425,15 @@ def generate_story():
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
         # ✅ Generate the Full Story
-        full_story = generate_story_mistral(prompt, chapter_label, max_tokens=800)
+        full_story = generate_story_mistral(prompt, formatted_lang['chapter_label'], max_tokens=800)
         logging.info("Story generated successfully.")
 
         # ✅ Split into Sections
-        sections = split_story_into_sections(full_story,chapter_label)
+        sections = split_story_into_sections(full_story, formatted_lang['chapter_label'])
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = [] # [] for empty - generate_image_per_section(sections, story_language)
+        illustrations = [] # [] for empty - generate_image_per_section(sections, formatted_lang)
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
@@ -462,14 +443,17 @@ def generate_story():
             template = Template(template_file.read())
 
         rendered_html = template.render(
-            title=f"A Personalized Story for {child_name}",
-            author=child_name,
+            title=formatted_lang['story_title'],
+            author=formatted_lang['by_author'],
             content=full_story,
             sections=sections,
             illustrations=illustrations,
             age=int(age),
-            chapter_label=chapter_label 
+            chapter_label=formatted_lang['chapter_label'],
+            end_text=formatted_lang['end_text'],
+            no_illustrations_text=formatted_lang['no_illustrations']
         )
+        
         
         logging.info("Rendering PDF with WeasyPrint...")
         log_memory_usage("Before PDF Generation")
@@ -486,7 +470,7 @@ def generate_story():
 
         return jsonify({
             "status": "pending",
-            "message": "PDF is being generated.",
+            "message": formatted_lang['loading_message'],
             "task_id": task.id,  # ✅ Send Task ID so the user can check progress
             "pdf_url": pdf_url  # ✅ This will be valid once the task completes
         })
@@ -497,7 +481,10 @@ def generate_story():
 
     except Exception as e:
         logging.error(f"Error in generate_story: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "status": "error", 
+            "message": formatted_lang.get('error_message', str(e))
+        }), 500
 
     finally:
         gc.collect()
