@@ -312,7 +312,7 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
 
 
 def generate_image_per_section(sections, story_language='english'):
-    """Generates an image and a caption in the correct language for each section."""
+    """Generates an image and a pure descriptive caption for each section."""
     illustrations = []
     
     for section in sections:
@@ -320,23 +320,26 @@ def generate_image_per_section(sections, story_language='english'):
         illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
 
-        # Generate a brief caption in the correct language
-        caption_prompt = f"""Write a single brief caption (maximum 8 words) in {story_language} for this illustration: {section['summary']}.
-        ONLY return the caption text, nothing else."""
+        # Generate a brief descriptive caption
+        caption_prompt = f"""Write a single descriptive phrase (maximum 8 words) in {story_language} that captures this scene: {section['summary']}.
+        IMPORTANT:
+        - Describe only what's happening in the scene
+        - Keep it short and direct
+        - ONLY return the caption text itself"""
         
         caption = generate_story_mistral(
             caption_prompt, 
             "Caption", 
-            max_tokens=20  # Reduced tokens to prevent long output
-        ).strip().split('\n')[0]  # Take only the first line to ensure brevity
+            max_tokens=15
+        ).strip().split('\n')[0]
         
         illustration = {
             "url": image_url if image_url else "https://example.com/default_image.jpg",
-            "caption": caption if caption else f"Illustration {section['chapter_number']}"
+            "caption": caption.strip()
         }
         
         illustrations.append(illustration)
-        logging.info(f"Generated illustration: {illustration}")
+        logging.info(f"Generated illustration caption: {caption.strip()}")
 
     return illustrations
 
