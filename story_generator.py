@@ -7,23 +7,68 @@ class StoryGenerator:
     def __init__(self, api_key, replicate_client):
         self.api_key = api_key
         self.replicate_client = replicate_client
-        self.max_sections = API_CONFIG['STORY_SECTIONS']
 
-    def generate_story(self, prompt, chapter_label, max_tokens=API_CONFIG['MAX_TOKENS']):
-        """Generate story using Mistral API."""
+    def generate_story(self, prompt, chapter_label, story_length="short"):
+        """Generate story using Mistral API with length consideration."""
         try:
-            formatted_prompt = f"""{prompt}
-            Structure the story into exactly {self.max_sections} chapters.
-            Clearly label each chapter as "{chapter_label} X:". Ensure chapters are balanced in length.
-            Each chapter should be well-defined and evenly distributed throughout the story."""
+            length_config = STORY_LENGTH_CONFIG[story_length]
+            max_tokens = length_config["max_tokens"]
+            target_sections = length_config["target_sections"]
 
-            response = self._call_mistral_api(formatted_prompt)
+            # Add length guidance to prompt
+            formatted_prompt = f"""{prompt}
+            Structure the story into approximately {target_sections} chapters.
+            Ensure the story has a proper beginning, middle, and end.
+            Each chapter should be balanced in length.
+            IMPORTANT: Provide a complete story with proper resolution - do not end abruptly.
+            Use "{chapter_label} X:" to label each chapter.
+            """
+
+            response = self._call_mistral_api(formatted_prompt, max_tokens)
             if response:
-                return response["choices"][0]["message"]["content"]
+                story_text = response["choices"][0]["message"]["content"]
+                if self._verify_story_completion(story_text):
+                    return story_text
+                else:
+                    # If story seems incomplete, try to generate a proper ending
+                    return self._ensure_story_completion(story_text, chapter_label, max_tokens)
             return "Error generating story."
         except Exception as e:
             logging.error(f"Story generation error: {str(e)}")
             return f"Error generating story: {str(e)}"
+
+    def _verify_story_completion(self, story_text):
+        """Basic verification of story completion."""
+        # Check for common ending indicators
+        ending_indicators = [
+            "The End",
+            "Fin",
+            "Ende",
+            "concluded",
+            "finally",
+            "last",
+            "happily ever after"
+        ]
+        
+        # Check last few paragraphs for conclusion indicators
+        last_paragraphs = story_text.split('\n')[-3:]
+        text_to_check = ' '.join(last_paragraphs).lower()
+        
+        return any(indicator.lower() in text_to_check for indicator in ending_indicators)
+
+    def _ensure_story_completion(self, story_text, chapter_label, max_tokens):
+        """Attempt to generate a proper ending if needed."""
+        completion_prompt = f"""
+        Complete this story with a proper ending (1-2 paragraphs maximum):
+        
+        {story_text}
+        """
+        
+        response = self._call_mistral_api(completion_prompt, max_tokens=200)
+        if response:
+            ending = response["choices"][0]["message"]["content"]
+            return f"{story_text}\n\n{ending}"
+        return story_text
 
     def _call_mistral_api(self, prompt):
         """Make API call to Mistral."""
