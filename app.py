@@ -426,7 +426,7 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = []  # Empty list to avoid errors
+        illustrations = generate_image_per_section(sections) # [] for empty
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
@@ -440,11 +440,13 @@ def generate_story():
             author=child_name,
             content=full_story,
             sections=sections,
-            illustrations=illustrations,
             age=int(age),
             chapter_label=chapter_label 
         )
+        
+        # illustrations=illustratoins, (If no illustrations)
 
+        
         logging.info("Rendering PDF with WeasyPrint...")
         log_memory_usage("Before PDF Generation")
 
