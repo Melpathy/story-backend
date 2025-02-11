@@ -199,8 +199,10 @@ def extract_moral(story_text):
     """Extract moral from story text."""
     lines = story_text.split('\n')
     for line in lines:
-        if line.strip().lower().startswith('✨ moral:'):
-            return line.strip()
+        line = line.strip()
+        if line.lower().startswith('moral:') or line.lower().startswith('morale:'):
+            # Remove the "Moral:" prefix and strip whitespace
+            return line.split(':', 1)[1].strip()
     return None
 
 @app.route('/api/generate-story', methods=['POST'])
