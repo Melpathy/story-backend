@@ -187,30 +187,47 @@
             margin-bottom: 30px 0 50px 0;
         }
 
-        /* Add the new moral lesson styling */
-        .moral-lesson {
-            margin-top: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
+        /* Replace the existing moral-lesson CSS with this enhanced version */
+        .moral-section {
+            margin: 50px auto;
+            padding: 30px;
+            max-width: 90%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 249, 240, 0.95) 100%);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
-            font-style: italic;
-            color: #4A4A4A;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .moral-lesson::before {
-            content: "✨";
-            display: inline-block;
-            margin-right: 8px;
-        }
-
-        .moral-lesson::after {
-            content: "✨";
-            display: inline-block;
-            margin-left: 8px;
+            page-break-inside: avoid;
         }
         
+        .moral-label {
+            font-family: 'Georgia', serif;
+            font-size: 1.4em;
+            color: #2E86C1;
+            margin-bottom: 15px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .moral-content {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #4A4A4A;
+            font-style: italic;
+            padding: 10px 20px;
+            position: relative;
+        }
+        
+        .moral-content::before,
+        .moral-content::after {
+            content: "✨";
+            display: inline-block;
+            color: #FFD700;
+            margin: 0 10px;
+            font-size: 1.2em;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+        }
+        
+       
         /* End page styles */
         .the-end {
             text-align: center;
@@ -294,23 +311,26 @@
     </div>
 
 
-    <!-- For non-chapter pages -->
+    <!-- Story ending section -->
     <div class="content-section">
-        <!-- Star at top -->
+        <!-- Decorative star -->
         <div class="star-decoration">✧</div>
-    </div>
-
-    <!-- Add this before the end of content -->
-    <div class="moral-lesson">
-        {{ moral }}
-    </div>
-    
-    <!-- End Page -->
-    <div class="the-end">
-        {{ end_text }}
-        {% if not illustrations %}
-        <p class="end-note">(Illustrations not generated in this test.)</p>
+        
+        <!-- Moral section with proper conditional rendering -->
+        {% if moral %}
+        <div class="moral-section">
+            <div class="moral-label">{{ moral_label }}</div>
+            <div class="moral-content">{{ moral }}</div>
+        </div>
         {% endif %}
+        
+        <!-- End Page -->
+        <div class="the-end">
+            {{ end_text }}
+            {% if not illustrations %}
+            <p class="end-note">{{ no_illustrations_text }}</p>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>
