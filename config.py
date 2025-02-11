@@ -44,22 +44,13 @@ STORY_LENGTH_CONFIG = {
     "short": {
         "max_tokens": 800,
         "target_sections": 3,
-        "price": 0,  # Free tier
-        "description": "A perfect bedtime story (~3 pages)",
-        "is_premium": False
     },
     "medium": {
         "max_tokens": 1600,
         "target_sections": 5,
-        "price": 2.99,  # Example price
-        "description": "A more detailed adventure (~6 pages)",
-        "is_premium": True
     },
     "long": {
         "max_tokens": 2400,
         "target_sections": 7,
-        "price": 4.99,  # Example price
-        "description": "An epic journey (~9 pages)",
-        "is_premium": True
     }
 }
