@@ -316,20 +316,24 @@ def generate_image_per_section(sections):
     illustrations = []
     
     for section in sections:
+        # Generate illustration based on section summary
         illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
 
-        # ✅ Generate a custom caption
-        caption_prompt = f"Create a short caption (max 10 words) for an illustration of: {section['summary']}"
-        image_label = generate_story_mistral(caption_prompt, "Illustration", max_tokens=20)  # Use a relevant label
-
-        illustrations.append({
-            "url": image_url if image_url else "https://example.com/default_image.jpg",  # Fallback
-            "caption": image_label if image_label else f"Illustration for {section['chapter_number']}"  # Default caption
-        })
+        # Generate a context-appropriate caption
+        caption_prompt = f"Write a brief, engaging caption (max 10 words) for: {section['summary']}"
+        caption = generate_story_mistral(caption_prompt, "Caption", max_tokens=30).strip()
+        
+        # Ensure we have valid data or use fallbacks
+        illustration = {
+            "url": image_url if image_url else "https://example.com/default_image.jpg",
+            "caption": caption if caption else f"Illustration for {section['chapter_number']}"
+        }
+        
+        illustrations.append(illustration)
+        logging.info(f"Generated illustration: {illustration}")  # Add logging for debugging
 
     return illustrations
-
 
 
 
