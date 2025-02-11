@@ -21,6 +21,7 @@ class StoryGenerator:
             Ensure the story has a proper beginning, middle, and end.
             Each chapter should be balanced in length.
             IMPORTANT: Provide a complete story with proper resolution - do not end abruptly.
+            Then, add the moral lesson on a new line starting with "✨ Moral: "
             Use "{chapter_label} X:" to label each chapter.
             """
 
