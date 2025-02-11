@@ -311,7 +311,7 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
 
 
 
-def generate_image_per_section(sections, chapter_label):
+def generate_image_per_section(sections):
     """Generates an image and a custom caption for each section's summary."""
     illustrations = []
     
@@ -319,16 +319,17 @@ def generate_image_per_section(sections, chapter_label):
         illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
 
-        # Generate a custom caption based on the summary
+        # ✅ Generate a custom caption
         caption_prompt = f"Create a short caption (max 10 words) for an illustration of: {section['summary']}"
-        caption = generate_story_mistral(caption_prompt, chapter_label, max_tokens=20)  # Adjust tokens for brevity
+        image_label = generate_story_mistral(caption_prompt, "Illustration", max_tokens=20)  # Use a relevant label
 
         illustrations.append({
             "url": image_url if image_url else "https://example.com/default_image.jpg",  # Fallback
-            "caption": caption if caption else f"Illustration for {section['chapter_number']}"  # Default if missing
+            "caption": image_label if image_label else f"Illustration for {section['chapter_number']}"  # Default caption
         })
 
     return illustrations
+
 
 
 
@@ -437,7 +438,7 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = generate_image_per_section(sections, chapter_label) # [] for empty
+        illustrations = generate_image_per_section(sections) # [] for empty
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
