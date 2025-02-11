@@ -257,10 +257,11 @@
             <div class="chapter-content">
                 {{ section.content }}
             </div>
-            {% if illustrations and illustrations[loop.index0] %}
+           {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
                 <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
                      alt="{{ illustrations[loop.index0].caption }}">
+                <!-- Only display the caption, no chapter info -->
                 <p class="illustration-caption">{{ illustrations[loop.index0].caption }}</p>
             </div>
             {% endif %}
