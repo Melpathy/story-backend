@@ -259,7 +259,7 @@
             </div>
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
-                <img src="{{ illustrations[loop.index0] }}" class="illustration" 
+                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
                      alt="Illustration for {{ chapter_label }} {{ loop.index }}">
                 <p class="illustration-caption">{{ illustrations[loop.index0].caption }}</p>
             </div>
