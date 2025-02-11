@@ -186,6 +186,30 @@
             font-size: 1.5em;
             margin-bottom: 30px 0 50px 0;
         }
+
+        /* Add the new moral lesson styling */
+        .moral-lesson {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            text-align: center;
+            font-style: italic;
+            color: #4A4A4A;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .moral-lesson::before {
+            content: "✨";
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .moral-lesson::after {
+            content: "✨";
+            display: inline-block;
+            margin-left: 8px;
+        }
         
         /* End page styles */
         .the-end {
@@ -276,6 +300,10 @@
         <div class="star-decoration">✧</div>
     </div>
 
+    <!-- Add this before the end of content -->
+    <div class="moral-lesson">
+        {{ moral }}
+    </div>
     
     <!-- End Page -->
     <div class="the-end">
