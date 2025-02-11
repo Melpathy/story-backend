@@ -311,7 +311,7 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
 
 
 
-def generate_image_per_section(sections):
+def generate_image_per_section(sections, chapter_label):
     """Generates an image and a custom caption for each section's summary."""
     illustrations = []
     
@@ -437,7 +437,7 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = generate_image_per_section(sections) # [] for empty
+        illustrations = generate_image_per_section(sections, chapter_label) # [] for empty
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
