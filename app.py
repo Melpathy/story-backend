@@ -110,12 +110,17 @@ def add_headers(response):
 
 @celery.task
 def generate_pdf_task(html_content, pdf_filename):
-    """Generate PDF, upload to S3, and return a temporary pre-signed URL."""
+    """
+    Generate PDF, upload to S3, and return a temporary pre-signed URL.
+    """
     try:
-        # Create PDF directory if it doesn't exist
-        os.makedirs(STORAGE_CONFIG['PDF_TEMP_DIR'], exist_ok=True)
-        pdf_path = os.path.join(STORAGE_CONFIG['PDF_TEMP_DIR'], sanitize_filename(pdf_filename))
-        
+        # Create temp directory if it doesn't exist
+        pdf_dir = "/tmp"
+        os.makedirs(pdf_dir, exist_ok=True)
+        pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
+
+        logging.info(f"📂 Generating PDF at: {pdf_path}")
+
         # Generate PDF
         HTML(string=html_content).write_pdf(pdf_path)
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
@@ -123,26 +128,45 @@ def generate_pdf_task(html_content, pdf_filename):
         # Get S3 bucket name
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
-            raise ValueError("S3_BUCKET_NAME environment variable is missing!")
+            raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
 
-        # Generate S3 key and upload
-        s3_key = get_s3_key(pdf_filename)
+        # Generate S3 key with date prefix
+        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
+        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
+
+        logging.info(f"📡 Uploading PDF to S3 bucket: {bucket_name}, Key: {s3_key}")
+
+        # Upload to S3 with content type
         s3_client.upload_file(
             pdf_path, 
             bucket_name, 
             s3_key, 
-            ExtraArgs={'ContentType': 'application/pdf'}
+            ExtraArgs={
+                'ContentType': 'application/pdf',
+                'ContentDisposition': f'attachment; filename="{pdf_filename}"'
+            }
         )
 
-        # Generate pre-signed URL
-        presigned_url = generate_presigned_url(bucket_name, s3_key)
-        logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
+        # Generate pre-signed URL with 1-hour expiration
+        presigned_url = generate_presigned_url(bucket_name, s3_key, expiration=3600)
+        
+        if not presigned_url:
+            raise Exception("Failed to generate pre-signed URL")
 
+        logging.info(f"✅ Pre-signed URL generated successfully")
         return presigned_url
 
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
+    finally:
+        # Cleanup: Remove temporary PDF file
+        try:
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+        except Exception as e:
+            logging.error(f"❌ Failed to cleanup temporary PDF: {str(e)}")
+          
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
