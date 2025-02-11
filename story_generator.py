@@ -70,7 +70,7 @@ class StoryGenerator:
             return f"{story_text}\n\n{ending}"
         return story_text
 
-    def _call_mistral_api(self, prompt):
+    def _call_mistral_api(self, prompt, max_tokens=None):
         """Make API call to Mistral."""
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
@@ -84,20 +84,22 @@ class StoryGenerator:
                 {"role": "system", "content": "You are an expert children's story writer."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": API_CONFIG['MAX_TOKENS'],
+            "max_tokens": max_tokens if max_tokens is not None else API_CONFIG['MAX_TOKENS'],
             "temperature": 0.7
         }
         
         response = requests.post(url, json=payload, headers=headers)
         return response.json() if response.status_code == 200 else None
 
-    def split_into_sections(self, story_text, chapter_label):
+    def split_into_sections(self, story_text, chapter_label, story_length="short"):
         """Split story into sections."""
         sections = []
         chapter_regex = re.compile(rf"({chapter_label}\s*\d+[:.]?)", re.IGNORECASE)
         parts = chapter_regex.split(story_text)[1:]
         
-        section_count = min(len(parts) // 2, self.max_sections)
+        # Get target sections from config
+        target_sections = STORY_LENGTH_CONFIG[story_length]["target_sections"]
+        section_count = min(len(parts) // 2, target_sections)
         
         for i in range(0, section_count * 2, 2):
             section = self._process_section(parts[i:i+2], chapter_label)
