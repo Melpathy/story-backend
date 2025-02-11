@@ -56,7 +56,7 @@ class StoryGenerator:
         
         return any(indicator.lower() in text_to_check for indicator in ending_indicators)
 
-    def _ensure_story_completion(self, story_text, chapter_label, max_tokens):
+    def _ensure_story_completion(self, story_text, chapter_label, story_length="short"):
         """Attempt to generate a proper ending if needed."""
         completion_prompt = f"""
         Complete this story with a proper ending (1-2 paragraphs maximum):
@@ -64,6 +64,7 @@ class StoryGenerator:
         {story_text}
         """
         
+        # Use the story_length parameter instead of max_tokens
         response = self._call_mistral_api(completion_prompt, max_tokens=200)
         if response:
             ending = response["choices"][0]["message"]["content"]
