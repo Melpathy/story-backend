@@ -312,13 +312,24 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
 
 
 def generate_image_per_section(sections):
-    """Generates an image for each section's summary."""
+    """Generates an image and a custom caption for each section's summary."""
     illustrations = []
+    
     for section in sections:
-        illustration_prompt = f"Children's storybook illustration for: {section['summary']}" if section['summary'] else "Illustrate this story section."
+        illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
-        illustrations.append(image_url if image_url else "https://example.com/default_image.jpg")  # Fallback
+
+        # Generate a custom caption based on the summary
+        caption_prompt = f"Create a short caption (max 10 words) for an illustration of: {section['summary']}"
+        caption = generate_story_mistral(caption_prompt, chapter_label, max_tokens=20)  # Adjust tokens for brevity
+
+        illustrations.append({
+            "url": image_url if image_url else "https://example.com/default_image.jpg",  # Fallback
+            "caption": caption if caption else f"Illustration for {section['chapter_number']}"  # Default if missing
+        })
+
     return illustrations
+
 
 
 
