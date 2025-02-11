@@ -96,25 +96,29 @@ def get_language_config(language='english', custom_language=None):
     """Get language configuration based on selected language."""
     language = language.lower()
     
-    # Handle custom language case
-    if language == 'other-language' and custom_language:
-        try:
-            custom_config = {
-                "story_title": translate_with_mistral("A Personalized Story for", custom_language) + " {name}",
-                "chapter_label": translate_with_mistral("Chapter", custom_language),
-                "illustration_label": translate_with_mistral("Illustration", custom_language),
-                "end_text": translate_with_mistral("The End", custom_language),
-                "by_author": translate_with_mistral("By", custom_language) + " {author}",
-                "no_illustrations": translate_with_mistral("(Illustrations not generated in this test.)", custom_language),
-                "loading_message": translate_with_mistral("Your story is being generated...", custom_language),
-                "error_message": translate_with_mistral("An error occurred while generating your story.", custom_language),
-                "success_message": translate_with_mistral("PDF successfully generated!", custom_language),
-                "processing_message": translate_with_mistral("Task is in progress.", custom_language)
-            }
-            return custom_config
-        except Exception as e:
-            logging.error(f"Translation failed for custom language: {str(e)}")
-            return LANGUAGE_CONFIG['english']
+    # First check if it's one of our predefined languages
+    if language in LANGUAGE_CONFIG:
+        return LANGUAGE_CONFIG[language]
+    
+    # If not a predefined language, treat it as a custom language
+    try:
+        # Use Mistral to translate all necessary strings
+        custom_config = {
+            "story_title": translate_with_mistral("A Personalized Story for", language) + " {name}",
+            "chapter_label": translate_with_mistral("Chapter", language),
+            "illustration_label": translate_with_mistral("Illustration", language),
+            "end_text": translate_with_mistral("The End", language),
+            "by_author": translate_with_mistral("By", language) + " {author}",
+            "no_illustrations": translate_with_mistral("(Illustrations not generated in this test.)", language),
+            "loading_message": translate_with_mistral("Your story is being generated...", language),
+            "error_message": translate_with_mistral("An error occurred while generating your story.", language),
+            "success_message": translate_with_mistral("PDF successfully generated!", language),
+            "processing_message": translate_with_mistral("Task is in progress.", language)
+        }
+        return custom_config
+    except Exception as e:
+        logging.error(f"Translation failed for language {language}: {str(e)}")
+        return LANGUAGE_CONFIG['english']  # Fallback to English
     
     return LANGUAGE_CONFIG.get(language, LANGUAGE_CONFIG['english'])
 
