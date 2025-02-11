@@ -274,19 +274,37 @@ def generate_story():
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    """Serve the generated PDF file."""
-    sanitized_filename = sanitize_filename(filename)
-    pdf_path = os.path.join(STORAGE_CONFIG['PDF_STORAGE_DIR'], sanitized_filename)
+    """
+    Redirect to S3 pre-signed URL for PDF viewing/download.
+    """
+    try:
+        # Get S3 bucket name
+        bucket_name = os.getenv("S3_BUCKET_NAME")
+        if not bucket_name:
+            raise ValueError("S3_BUCKET_NAME environment variable is missing!")
 
-    if not os.path.exists(pdf_path):
-        logging.error(f"❌ PDF not found at: {pdf_path}")
+        # Generate S3 key
+        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
+        s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
+
+        # Generate a fresh pre-signed URL
+        presigned_url = generate_presigned_url(bucket_name, s3_key, expiration=3600)  # 1 hour expiration
+
+        if presigned_url:
+            # Redirect to the pre-signed URL
+            return redirect(presigned_url)
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Failed to generate pre-signed URL"
+            }), 500
+
+    except Exception as e:
+        logging.error(f"❌ Error serving PDF: {str(e)}")
         return jsonify({
-            "status": "error", 
-            "message": f"File not found: {filename}"
-        }), 404
-
-    logging.info(f"✅ Serving PDF: {pdf_path}")
-    return send_file(pdf_path, mimetype="application/pdf", as_attachment=True)
+            "status": "error",
+            "message": f"Error serving PDF: {str(e)}"
+        }), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
