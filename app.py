@@ -311,8 +311,8 @@ def split_story_into_sections(story_text, chapter_label, max_sections=3):
 
 
 
-def generate_image_per_section(sections):
-    """Generates an image and a custom caption for each section's summary."""
+def generate_image_per_section(sections, story_language='english'):
+    """Generates an image and a caption in the correct language for each section."""
     illustrations = []
     
     for section in sections:
@@ -320,18 +320,23 @@ def generate_image_per_section(sections):
         illustration_prompt = f"Children's storybook illustration for: {section['summary']}"
         image_url = generate_image(illustration_prompt)
 
-        # Generate a context-appropriate caption
-        caption_prompt = f"Write a brief, engaging caption (max 10 words) for: {section['summary']}"
-        caption = generate_story_mistral(caption_prompt, "Caption", max_tokens=30).strip()
+        # Generate a brief caption in the correct language
+        caption_prompt = f"""Write a single brief caption (maximum 8 words) in {story_language} for this illustration: {section['summary']}.
+        ONLY return the caption text, nothing else."""
         
-        # Ensure we have valid data or use fallbacks
+        caption = generate_story_mistral(
+            caption_prompt, 
+            "Caption", 
+            max_tokens=20  # Reduced tokens to prevent long output
+        ).strip().split('\n')[0]  # Take only the first line to ensure brevity
+        
         illustration = {
             "url": image_url if image_url else "https://example.com/default_image.jpg",
-            "caption": caption if caption else f"Illustration for {section['chapter_number']}"
+            "caption": caption if caption else f"Illustration {section['chapter_number']}"
         }
         
         illustrations.append(illustration)
-        logging.info(f"Generated illustration: {illustration}")  # Add logging for debugging
+        logging.info(f"Generated illustration: {illustration}")
 
     return illustrations
 
@@ -442,7 +447,7 @@ def generate_story():
         logging.info(f"Story split into {len(sections)} sections.")
 
         # ✅ Generate Images for Each Section
-        illustrations = generate_image_per_section(sections) # [] for empty
+        illustrations = generate_image_per_section(sections, story_language) # [] for empty
 
         log_memory_usage("After Mistral API")
         logging.info("Story generated successfully.")
