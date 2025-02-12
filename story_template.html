@@ -2,12 +2,14 @@
 <html>
 <head>
     <style>
+        /* Existing page setup */
         @page {
             margin: 1in;
             size: A4;
             background: #fff9f0;
         }
         
+        /* Enhanced base styles */
         html, body {
             background: #fff9f0;
             margin: 0;
@@ -15,17 +17,17 @@
             min-height: 100%;
         }
 
-        /* Age-specific font styles */
+        /* Enhanced age-specific font styles with more playful fonts */
         .young-reader {
-            font-family: 'Verdana', 'Arial', sans-serif;
-            font-size: 16px;
+            font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
+            font-size: 18px;
             line-height: 2.2;
             letter-spacing: 0.03em;
         }
         
         .middle-reader {
             font-family: 'Century Gothic', 'Verdana', sans-serif;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 2;
             letter-spacing: 0.02em;
         }
@@ -37,17 +39,17 @@
             letter-spacing: normal;
         }
         
-        /* Base body styles - will be overridden by age-specific classes */
+        /* Enhanced body styles with conditional formatting */
         body {
             color: #333;
             {% if age <= 8 %}
-                font-family: 'Verdana', 'Arial', sans-serif;
-                font-size: 16px;
+                font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
+                font-size: 18px;
                 line-height: 2.2;
                 letter-spacing: 0.03em;
             {% elif age <= 12 %}
                 font-family: 'Century Gothic', 'Verdana', sans-serif;
-                font-size: 14px;
+                font-size: 16px;
                 line-height: 2;
                 letter-spacing: 0.02em;
             {% else %}
@@ -58,7 +60,7 @@
             {% endif %}
         }
         
-        /* Cover page styles */
+        /* Enhanced cover page with more playful design */
         .cover-page {
             text-align: center;
             height: 90vh;
@@ -66,170 +68,104 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #fff9f0 0%, #ffe4c4 100%);
-            border-radius: 15px;
+            background: linear-gradient(135deg, #fff9f0 0%, #FFB6C1 100%);
+            border-radius: 25px;
             margin-bottom: 50px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 40px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border: 8px solid #fff;
         }
         
+        /* Enhanced title with more vibrant colors */
         .cover-title {
-            font-size: 3em;
-            color: #4A90E2;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            font-family: 'Georgia', serif;
+            font-size: 3.5em;
+            color: #FF6B6B;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            font-family: {% if age <= 12 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
+            background: -webkit-linear-gradient(#FF6B6B, #4ECDC4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .cover-author {
-            font-size: 1.8em;
-            color: #666;
-            font-style: italic;
-            font-family: 'Georgia', serif;
-        }
-        
-        /* Chapter styles */
+        /* Enhanced chapter styles */
         .chapter {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             page-break-before: always;
+            border: {% if age <= 8 %}3px dashed #4ECDC4{% else %}1px solid #eee{% endif %};
         }
         
+        /* Enhanced chapter title with decorative elements */
         .chapter-title {
             text-align: center;
-            font-size: 1.6em;
-            color: #2E86C1;
-            margin: 30px 0 60px 0; 
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: 'Georgia', serif;
+            font-size: 2em;
+            color: #FF6B6B;
+            margin: 30px 0 60px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-family: {% if age <= 12 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
-            padding-bottom: 20px; /* Added padding */
-            border-bottom: 2px solid #eee; /* Added subtle separator */
-            position: relative; /* For decorative elements */
+            padding-bottom: 20px;
+            border-bottom: 3px solid #FFB6C1;
+            position: relative;
+        }
+        
+        /* Fun decorative elements for younger readers */
+        {% if age <= 8 %}
+        .chapter-title::before,
+        .chapter-title::after {
+            content: "★";
+            color: #FFB6C1;
+            position: absolute;
+            font-size: 1.2em;
+        }
+        
+        .chapter-title::before {
+            left: 20px;
         }
         
         .chapter-title::after {
-            content: "";
-            display: block;
-            width: 50px;
-            height: 2px;
-            background: #2E86C1;
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            transform: translateX(-50%);
+            right: 20px;
         }
+        {% endif %}
 
-        .chapter-number {
-            text-align: center;
-            font-size: 1.6em; 
-            color: #333;
-            margin-bottom: 30px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: 'Georgia', serif;
-            font-style: italic;
-        }
-        
-        .chapter-content {
-            font-size: 1.2em;
-            text-align: justify;
-            padding: 20px 20px 0 20px; /* Added top padding */
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-
-        .chapter-subtitle {
-            font-size: 1.3em;
-            color: #666;
-            margin-top: 20px;
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }    
-            
-        /* Illustration styles */
-        .illustration-container {
-            text-align: center;
-            margin: 30px 0;
-            page-break-inside: avoid;
-        }
-        
-        .illustration {
-            max-width: 80%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin: 20px auto;
-        }
-        
-        .illustration-caption {
-            font-style: italic;
-            color: #666;
-            margin-top: 10px;
-        }
-
-
-        /* Remove this style block from your CSS */
-        .chapter::before {
-            content: none;  /* This removes the star from chapters */
-        }
-
-        /* Keep your existing star-decoration class for the main star */
-        .star-decoration {
-            text-align: center;
-            color: #4A90E2;
-            font-size: 1.5em;
-            margin-bottom: 30px 0 50px 0;
-        }
-
-       
-        /* End page styles */
+        /* Enhanced end page styles */
         .the-end {
             text-align: center;
-            font-size: 2.5em;
-            color: #E67E22;
+            font-size: 3em;
+            color: #FF6B6B;
             margin-top: 60px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.15);
             page-break-before: always;
-            font-family: 'Georgia', serif;
+            font-family: {% if age <= 12 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
-        }
-        
-        /* Regular page content (non-chapter) */
-        .content-section {
-            margin-top: 50px;  /* Space after star */
-            padding: 0 20px;
+            background: -webkit-linear-gradient(#FF6B6B, #4ECDC4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-
-        
-        /* Decorative elements */
-        .chapter::before {
-            content: "✧";
-            display: block;
+        /* Enhanced star decoration */
+        .star-decoration {
             text-align: center;
-            color: #4A90E2;
+            color: #FFB6C1;
             font-size: 2em;
-            margin-bottom: 20px;
-        }
-        
-        /* Page break utility */
-        .page-break {
-            page-break-before: always;
+            margin: 30px 0 50px 0;
         }
 
-        /* End section note styles */
-        .end-note {
-            font-style: italic;
-            color: #666;
+        /* Enhanced illustration container */
+        .illustration-container {
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
+            margin: 40px 0;
+            page-break-inside: avoid;
+            {% if age <= 8 %}
+            border: 3px dashed #FFB6C1;
+            padding: 20px;
+            border-radius: 15px;
+            {% endif %}
         }
     </style>
 </head>
