@@ -61,9 +61,7 @@ LANGUAGE_CONFIG = {
 }
 
 def translate_with_mistral(text, target_language):
-    """
-    Enhanced Mistral API translation with better handling of structural text.
-    """
+    """Uses Mistral API to translate text with JSON output."""
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
@@ -71,13 +69,10 @@ def translate_with_mistral(text, target_language):
             "Content-Type": "application/json"
         }
         
-        system_prompt = """You are a professional book translator specializing in story structural elements. 
-        Your task is to translate keeping these guidelines:
-        1. Maintain formal literary style appropriate for books
-        2. Preserve any special characters or formatting
-        3. Ensure translations are appropriate for story/chapter headings and UI elements
-        4. Return only the direct translation without explanations
-        Return translations in JSON format with a single key 'translation' containing the translated text."""
+        # Enhanced prompt to enforce single language translation
+        system_prompt = f"""You are a translator. You must ONLY translate to {target_language}.
+        Never translate to any other language. Return ONLY a JSON object with the translation.
+        Format: {{"translation": "your translated text"}}"""
 
         payload = {
             "model": "mistral-medium",
@@ -88,7 +83,7 @@ def translate_with_mistral(text, target_language):
                 },
                 {
                     "role": "user", 
-                    "content": f"Translate this book/story structural text to {target_language}. Return ONLY a JSON object with the translation: '{text}'"
+                    "content": f"Translate ONLY to {target_language} and return ONLY a JSON object with the translation: '{text}'"
                 }
             ],
             "max_tokens": 50,
@@ -96,25 +91,17 @@ def translate_with_mistral(text, target_language):
         }
 
         response = requests.post(url, json=payload, headers=headers)
-        if not response.ok:
-            logging.error(f"Mistral API error: {response.status_code} - {response.text}")
-            return text
-
         response_json = response.json()
 
         if "choices" in response_json and response_json["choices"]:
             try:
                 content = response_json["choices"][0]["message"]["content"].strip()
-                content = content.replace("```json", "").replace("```", "").strip()
                 translation_data = json.loads(content)
                 
                 if isinstance(translation_data, dict) and "translation" in translation_data:
-                    translated_text = translation_data["translation"]
-                    logging.info(f"Successfully translated '{text}' to '{translated_text}'")
-                    return translated_text
+                    return translation_data["translation"]
                 
-            except json.JSONDecodeError as e:
-                logging.error(f"JSON parsing error: {str(e)}")
+            except json.JSONDecodeError:
                 content = response_json["choices"][0]["message"]["content"].strip()
                 if '"translation"' in content:
                     try:
@@ -125,16 +112,15 @@ def translate_with_mistral(text, target_language):
                             translation_data = json.loads(json_str)
                             if "translation" in translation_data:
                                 return translation_data["translation"]
-                    except Exception as e:
-                        logging.error(f"Failed to extract translation from partial JSON: {str(e)}")
+                    except:
+                        pass
                 
-        logging.warning(f"Falling back to original text due to translation failure")
         return text
 
     except Exception as e:
-        logging.error(f"Translation error: {str(e)}")
+        logging.error(f"Translation Error: {str(e)}")
         return text
-
+        
 def get_language_config(language='english', custom_language=None):
     """
     Get language configuration based on selected language.
