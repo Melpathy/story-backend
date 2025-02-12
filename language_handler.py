@@ -124,18 +124,20 @@ def translate_with_mistral(text, target_language):
 def get_language_config(language='english', custom_language=None):
     """
     Get language configuration based on selected language.
-    If language isn't predefined, use Mistral API to translate all necessary strings.
+    If it's a custom language, use that for translation.
     """
-    language = language.lower()
+    # If custom_language is provided, use that instead of the standard language
+    target_language = custom_language.lower() if custom_language else language.lower()
     
     # First check if it's one of our predefined languages
-    if language in LANGUAGE_CONFIG:
-        return LANGUAGE_CONFIG[language]
+    if not custom_language and target_language in LANGUAGE_CONFIG:
+        return LANGUAGE_CONFIG[target_language]
     
-    # If not a predefined language, create a custom config using Mistral translations
+    # If we're here, we need to translate everything to the target language
     try:
-        logging.info(f"Generating translations for non-predefined language: {language}")
+        logging.info(f"Generating translations for language: {target_language}")
         
+        # Define all strings that need translation
         strings_to_translate = {
             "story_title": "A Personalized Story for",  # {name} will be added later
             "chapter_label": "Chapter",
@@ -150,25 +152,27 @@ def get_language_config(language='english', custom_language=None):
             "processing_message": "Task is in progress."
         }
 
-        # Translate each string
+        # Translate all strings
         custom_config = {}
         for key, text in strings_to_translate.items():
-            translated_text = translate_with_mistral(text, language)
+            # Always pass the target_language to translate_with_mistral
+            translated_text = translate_with_mistral(text, target_language)
             
-            # Special handling for strings that need placeholders
+            # Handle placeholders for special cases
             if key == "story_title":
                 custom_config[key] = f"{translated_text} " + "{name}"
             elif key == "by_author":
                 custom_config[key] = f"{translated_text} " + "{author}"
             else:
                 custom_config[key] = translated_text
-
-            logging.info(f"Translated {key}: {custom_config[key]}")
+            
+            # Log for debugging
+            logging.info(f"Translated {key} to {target_language}: {custom_config[key]}")
 
         return custom_config
 
     except Exception as e:
-        logging.error(f"Translation failed for language {language}: {str(e)}")
+        logging.error(f"Translation failed for language {target_language}: {str(e)}")
         logging.warning(f"Falling back to English due to translation error")
         return LANGUAGE_CONFIG['english']
 
