@@ -61,7 +61,9 @@ LANGUAGE_CONFIG = {
 }
 
 def translate_with_mistral(text, target_language):
-    """Uses Mistral API to translate text with JSON output."""
+    """
+    Enhanced Mistral API translation with better handling of structural text.
+    """
     try:
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
@@ -69,16 +71,24 @@ def translate_with_mistral(text, target_language):
             "Content-Type": "application/json"
         }
         
+        system_prompt = """You are a professional book translator specializing in story structural elements. 
+        Your task is to translate keeping these guidelines:
+        1. Maintain formal literary style appropriate for books
+        2. Preserve any special characters or formatting
+        3. Ensure translations are appropriate for story/chapter headings and UI elements
+        4. Return only the direct translation without explanations
+        Return translations in JSON format with a single key 'translation' containing the translated text."""
+
         payload = {
             "model": "mistral-medium",
             "messages": [
                 {
                     "role": "system", 
-                    "content": "You are a translator. Return translations in JSON format with a single key 'translation' containing the translated text."
+                    "content": system_prompt
                 },
                 {
                     "role": "user", 
-                    "content": f"Translate the following to {target_language} and return ONLY a JSON object with the translation: '{text}'"
+                    "content": f"Translate this book/story structural text to {target_language}. Return ONLY a JSON object with the translation: '{text}'"
                 }
             ],
             "max_tokens": 50,
@@ -86,25 +96,28 @@ def translate_with_mistral(text, target_language):
         }
 
         response = requests.post(url, json=payload, headers=headers)
+        if not response.ok:
+            logging.error(f"Mistral API error: {response.status_code} - {response.text}")
+            return text
+
         response_json = response.json()
 
         if "choices" in response_json and response_json["choices"]:
             try:
-                # Try to parse the response as JSON
                 content = response_json["choices"][0]["message"]["content"].strip()
+                content = content.replace("```json", "").replace("```", "").strip()
                 translation_data = json.loads(content)
                 
-                # Extract just the translation from the JSON
                 if isinstance(translation_data, dict) and "translation" in translation_data:
-                    return translation_data["translation"]
+                    translated_text = translation_data["translation"]
+                    logging.info(f"Successfully translated '{text}' to '{translated_text}'")
+                    return translated_text
                 
-            except json.JSONDecodeError:
-                # If JSON parsing fails, try to clean up the response
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON parsing error: {str(e)}")
                 content = response_json["choices"][0]["message"]["content"].strip()
-                # Remove any non-JSON text
                 if '"translation"' in content:
                     try:
-                        # Try to extract just the JSON part
                         json_start = content.find('{')
                         json_end = content.rfind('}') + 1
                         if json_start >= 0 and json_end > json_start:
@@ -112,45 +125,66 @@ def translate_with_mistral(text, target_language):
                             translation_data = json.loads(json_str)
                             if "translation" in translation_data:
                                 return translation_data["translation"]
-                    except:
-                        pass
+                    except Exception as e:
+                        logging.error(f"Failed to extract translation from partial JSON: {str(e)}")
                 
-        return text  # Fallback to original text
+        logging.warning(f"Falling back to original text due to translation failure")
+        return text
 
     except Exception as e:
-        logging.error(f"Translation Error: {str(e)}")
-        return text  # Return original text if translation fails
-        
+        logging.error(f"Translation error: {str(e)}")
+        return text
 
 def get_language_config(language='english', custom_language=None):
-    """Get language configuration based on selected language."""
+    """
+    Get language configuration based on selected language.
+    If language isn't predefined, use Mistral API to translate all necessary strings.
+    """
     language = language.lower()
     
     # First check if it's one of our predefined languages
     if language in LANGUAGE_CONFIG:
         return LANGUAGE_CONFIG[language]
     
-    # If not a predefined language, treat it as a custom language
+    # If not a predefined language, create a custom config using Mistral translations
     try:
-        # Use Mistral to translate all necessary strings
-        custom_config = {
-            "story_title": translate_with_mistral("A Personalized Story for", language) + " {name}",
-            "chapter_label": translate_with_mistral("Chapter", language),
-            "illustration_label": translate_with_mistral("Illustration", language),
-            "end_text": translate_with_mistral("The End", language),
-            "by_author": translate_with_mistral("By", language) + " {author}",
-            "no_illustrations": translate_with_mistral("(Illustrations not generated in this test.)", language),
-            "loading_message": translate_with_mistral("Your story is being generated...", language),
-            "error_message": translate_with_mistral("An error occurred while generating your story.", language),
-            "success_message": translate_with_mistral("PDF successfully generated!", language),
-            "processing_message": translate_with_mistral("Task is in progress.", language)
+        logging.info(f"Generating translations for non-predefined language: {language}")
+        
+        strings_to_translate = {
+            "story_title": "A Personalized Story for",  # {name} will be added later
+            "chapter_label": "Chapter",
+            "illustration_label": "Illustration",
+            "end_text": "The End",
+            "by_author": "By",  # {author} will be added later
+            "no_illustrations": "(Illustrations not generated in this test.)",
+            "loading_message": "Your story is being generated...",
+            "error_message": "An error occurred while generating your story.",
+            "success_message": "PDF successfully generated!",
+            "moral_label": "Moral",
+            "processing_message": "Task is in progress."
         }
+
+        # Translate each string
+        custom_config = {}
+        for key, text in strings_to_translate.items():
+            translated_text = translate_with_mistral(text, language)
+            
+            # Special handling for strings that need placeholders
+            if key == "story_title":
+                custom_config[key] = f"{translated_text} " + "{name}"
+            elif key == "by_author":
+                custom_config[key] = f"{translated_text} " + "{author}"
+            else:
+                custom_config[key] = translated_text
+
+            logging.info(f"Translated {key}: {custom_config[key]}")
+
         return custom_config
+
     except Exception as e:
         logging.error(f"Translation failed for language {language}: {str(e)}")
-        return LANGUAGE_CONFIG['english']  # Fallback to English
-    
-    return LANGUAGE_CONFIG.get(language, LANGUAGE_CONFIG['english'])
+        logging.warning(f"Falling back to English due to translation error")
+        return LANGUAGE_CONFIG['english']
 
 def format_language_strings(config, context):
     """Format language strings with provided context."""
