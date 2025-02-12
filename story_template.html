@@ -243,8 +243,7 @@
     <!-- Story Content -->
     <div class="content">
         {% for section in sections %}
-        <div class="chapter">        
-             
+        <div class="chapter">
             <!-- Chapter number -->
             <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
@@ -253,30 +252,26 @@
             <!-- Chapter title -->
             <div class="chapter-title">
                 {{ section.title }}
-            </div>    
-            
+            </div>
+    
             <div class="chapter-content">
                 {{ section.content }}
             </div>
-           {% if illustrations and illustrations[loop.index0] %}
+            {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
                 <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
                      alt="{{ illustrations[loop.index0].caption }}">
-                <!-- Only display the caption, no chapter info -->
-                <p class="illustration-caption">{{ illustrations[loop.index0].caption }}</p>
+                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
             </div>
             {% endif %}
         </div>
         {% endfor %}
     </div>
 
-
     <!-- Story ending section -->
     <div class="content-section">
-        <!-- Decorative star -->
         <div class="star-decoration">✧</div>
         
-       
         <!-- End Page -->
         <div class="the-end">
             {{ end_text }}
