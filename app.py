@@ -239,7 +239,7 @@ def generate_story():
             formatted_secondary = format_language_strings(secondary_lang_config, context)
           
         # Build story prompt
-        prompt = build_story_prompt(data, formatted_lang)
+        prompt = build_story_prompt(data, formatted_primary)
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
         # Generate story in primary language with story length
@@ -278,8 +278,8 @@ def generate_story():
                 primary_story, 
                 formatted_primary['chapter_label']
             )
-
-       log_memory_usage("Before PDF Generation")
+          
+          log_memory_usage("Before PDF Generation")
         rendered_html = template.render(
             title=formatted_primary['story_title'],
             author=formatted_primary['by_author'],
@@ -301,7 +301,7 @@ def generate_story():
         
         return jsonify({
             "status": "pending",
-            "message": formatted_lang['loading_message'],
+            "message": formatted_primary['loading_message'],
             "task_id": task.id,
             "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{pdf_filename}"
         })
@@ -310,7 +310,7 @@ def generate_story():
         logging.error(f"Error in generate_story: {str(e)}")
         return jsonify({
             "status": "error", 
-            "message": formatted_lang.get('error_message', str(e))
+            "message": formatted_primary.get('error_message', str(e))
         }), 500
 
     finally:
