@@ -11,7 +11,11 @@ import logging
 import replicate
 from flask_cors import CORS
 
-with open("templates/story_template.html", "r", encoding="utf-8") as f:
+# Get the absolute path to the template file directly in root
+template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'story_template.html')
+
+# Use the direct path to open the template
+with open(template_path, "r", encoding="utf-8") as f:
     template_str = f.read()
 template = Template(template_str)
 
