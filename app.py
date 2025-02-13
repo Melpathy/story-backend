@@ -223,7 +223,7 @@ def handle_language_configs(data):
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
     """Handle story and PDF generation request."""
-  
+    
     formatted_primary = {"error_message": "An error occurred while generating your story."}
 
     try:
