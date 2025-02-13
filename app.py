@@ -279,7 +279,7 @@ def generate_story():
                 formatted_primary['chapter_label']
             )
           
-          log_memory_usage("Before PDF Generation")
+        log_memory_usage("Before PDF Generation")
         rendered_html = template.render(
             title=formatted_primary['story_title'],
             author=formatted_primary['by_author'],
@@ -290,10 +290,13 @@ def generate_story():
             chapter_label_second_language=formatted_secondary['chapter_label'] if formatted_secondary else None,
             end_text=formatted_primary['end_text'],
             end_text_second_language=formatted_secondary['end_text'] if formatted_secondary else None,
+            primary_language=data.get('story-language', 'English'),
+            second_language=data.get('bilingual-language') if data.get('bilingual-mode') == 'true' else None,
             illustration_label=formatted_primary['illustration_label'],
             no_illustrations_text=formatted_primary['no_illustrations'],
             age=int(data.get('age', 7))
         )
+
 
         # Queue PDF generation task
         pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
