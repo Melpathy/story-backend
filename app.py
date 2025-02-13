@@ -11,14 +11,27 @@ import logging
 import replicate
 from flask_cors import CORS
 
+# Set up logging first
+logging.basicConfig(level=logging.INFO)
+
 # Get the absolute path to the template file directly in root
 template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'story_template.html')
 
-# Use the direct path to open the template
-with open(template_path, "r", encoding="utf-8") as f:
-    template_str = f.read()
-template = Template(template_str)
+logging.info(f"Looking for template at: {template_path}")
 
+# Load template with error handling
+try:
+    with open(template_path, "r", encoding="utf-8") as f:
+        template_str = f.read()
+    template = Template(template_str)
+    logging.info("✅ Template loaded successfully")
+except FileNotFoundError as e:
+    logging.error(f"❌ Template file not found at {template_path}")
+    raise
+except Exception as e:
+    logging.error(f"❌ Error loading template: {str(e)}")
+    raise
+    
 # Import our new modules
 from config import CELERY_CONFIG, FLASK_CONFIG, STORAGE_CONFIG, API_CONFIG, BASE_URLS
 from utils import sanitize_filename, get_s3_key, log_memory_usage, build_story_prompt
