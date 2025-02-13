@@ -195,6 +195,24 @@ def get_task_status(task_id):
         "message": formatted_lang['processing_message']
     })
 
+def handle_language_configs(data):
+    """
+    Handle both primary and bilingual language configurations.
+    Returns primary and secondary language configs if bilingual mode is enabled.
+    """
+    # Get primary language configuration
+    story_language = data.get('story-language', 'English').lower()
+    custom_language = data.get('custom-language', None)
+    primary_config = get_language_config(story_language, custom_language)
+    
+    # Check if bilingual mode is enabled
+    if data.get('bilingual-mode') == 'true':
+        bilingual_language = data.get('bilingual-language', '').lower()
+        bilingual_custom = data.get('custom-bilingual-language', None)
+        secondary_config = get_language_config(bilingual_language, bilingual_custom)
+        return primary_config, secondary_config
+    
+    return primary_config, None
 
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
@@ -205,56 +223,76 @@ def generate_story():
         story_length = data.get('story_length', 'short')
         logging.info(f"Received Data: {data}")
 
-        # Setup language configuration
-        story_language = data.get('story-language', 'English').lower()
-        custom_language = data.get('custom-language', None)
-        lang_config = get_language_config(story_language, custom_language)
-
-        # Setup language configuration
-        bilingual_language = data.get('bilingual-language', None).lower()
-        bilingual_custom = data.get('custom-bilingual-language', None)
-        lang_config = get_language_config(bilingual_language, bilingual_custom)
+        # Get language configurations
+        primary_lang_config, secondary_lang_config = handle_language_configs(data)
         
         # Format language strings
         context = {
             'name': data.get('childName', 'child'),
             'author': data.get('childName', 'child')
         }
-        formatted_lang = format_language_strings(lang_config, context)
-
+      
+        # Format strings for both languages
+        formatted_primary = format_language_strings(primary_lang_config, context)
+        formatted_secondary = None
+        if secondary_lang_config:
+            formatted_secondary = format_language_strings(secondary_lang_config, context)
+          
         # Build story prompt
         prompt = build_story_prompt(data, formatted_lang)
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
-        # Generate story
+        # Generate story in primary language with story length
         log_memory_usage("Before Story Generation")
-        # When generating story, pass the length parameter
-        full_story = story_generator.generate_story(
+        primary_story = story_generator.generate_story(
             prompt, 
-            formatted_lang['chapter_label'],
-            story_length=story_length
+            formatted_primary['chapter_label'],
+            story_length=story_length  # Pass story length here
         )
 
-        
-        # Split into sections and generate illustrations
-        sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
-        illustrations = []  # Empty for now - can be enabled later
+        # Handle bilingual content if enabled
+        if data.get('bilingual-mode') == 'true':
+            bilingual_format = data.get('bilingual-format', 'AABB')
+            secondary_story = story_generator.translate_story(
+                primary_story,
+                data.get('bilingual-language', ''),
+                bilingual_format
+            )
 
-        # Generate PDF
-        log_memory_usage("Before PDF Generation")
-        with open("story_template.html") as template_file:
-            template = Template(template_file.read())
+      
+        # Split content based on format
+            if bilingual_format == 'AABB':
+                sections = story_generator.split_into_parallel_sections(
+                    primary_story,
+                    secondary_story,
+                    formatted_primary['chapter_label'],
+                    formatted_secondary['chapter_label']
+                )
+            else:  # ABAB format
+                sections = story_generator.split_into_sentence_pairs(
+                    primary_story,
+                    secondary_story
+                )
+        else:
+            sections = story_generator.split_into_sections(
+                primary_story, 
+                formatted_primary['chapter_label']
+            )
 
+       log_memory_usage("Before PDF Generation")
         rendered_html = template.render(
-            title=formatted_lang['story_title'],
-            author=formatted_lang['by_author'],
-            content=full_story,
+            title=formatted_primary['story_title'],
+            author=formatted_primary['by_author'],
+            bilingual_mode=data.get('bilingual-mode') == 'true',
+            bilingual_format=data.get('bilingual-format', 'AABB'),
             sections=sections,
-            illustrations=illustrations,
-            age=int(data.get('age', 7)),
-            chapter_label=formatted_lang['chapter_label'],
-            end_text=formatted_lang['end_text'],
-            no_illustrations_text=formatted_lang['no_illustrations'],           
+            chapter_label=formatted_primary['chapter_label'],
+            chapter_label_second_language=formatted_secondary['chapter_label'] if formatted_secondary else None,
+            end_text=formatted_primary['end_text'],
+            end_text_second_language=formatted_secondary['end_text'] if formatted_secondary else None,
+            illustration_label=formatted_primary['illustration_label'],
+            no_illustrations_text=formatted_primary['no_illustrations'],
+            age=int(data.get('age', 7))
         )
 
         # Queue PDF generation task
