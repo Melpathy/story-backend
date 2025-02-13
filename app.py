@@ -1,7 +1,7 @@
 from celery import Celery
 from flask import Flask, request, jsonify, send_file, redirect
 from weasyprint import HTML
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader, Template
 from datetime import datetime
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -220,6 +220,9 @@ def handle_language_configs(data):
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
     """Handle story and PDF generation request."""
+  
+      formatted_primary = {"error_message": "An error occurred while generating your story."}
+
     try:
         # Get request data
         data = request.get_json()
