@@ -2,6 +2,8 @@ import logging
 import requests
 from config import API_CONFIG, IMAGE_CONFIG, STORY_LENGTH_CONFIG
 import re
+from language_handler import translate_with_mistral
+
 
 class StoryGenerator:
     def __init__(self, api_key, replicate_client):
@@ -158,3 +160,95 @@ class StoryGenerator:
         except Exception as e:
             logging.error(f"Illustration generation error: {str(e)}")
             return None
+            
+    def translate_story(self, content, target_language, format_type):
+        """Translate story content to target language using existing translation function."""
+        try:
+            # Split content into manageable chunks for translation
+            chunks = self._split_for_translation(content)
+            translated_chunks = []
+            
+            for chunk in chunks:
+                translated_text = translate_with_mistral(chunk, target_language)
+                translated_chunks.append(translated_text)
+            
+            # Combine translated chunks
+            return "\n\n".join(translated_chunks)
+        except Exception as e:
+            logging.error(f"Translation error: {str(e)}")
+            return content
+
+    def _split_for_translation(self, content):
+        """Split content into manageable chunks for translation."""
+        # Split by chapters
+        chapter_splits = re.split(r'(Chapter \d+:?|Capitolo \d+:?|Chapitre \d+:?|Kapitel \d+:?)', content)
+        
+        chunks = []
+        current_chunk = ""
+        
+        for i in range(0, len(chapter_splits)):
+            if i % 2 == 0:  # Content
+                if chapter_splits[i].strip():
+                    chunks.append(current_chunk + chapter_splits[i])
+                    current_chunk = ""
+            else:  # Chapter header
+                current_chunk = chapter_splits[i] + "\n"
+        
+        if current_chunk:
+            chunks.append(current_chunk)
+            
+        return [chunk.strip() for chunk in chunks if chunk.strip()]
+
+    def split_into_parallel_sections(self, primary_content, secondary_content, primary_label, secondary_label):
+        """Split content for AABB (column) format."""
+        primary_sections = self.split_into_sections(primary_content, primary_label)
+        secondary_sections = self.split_into_sections(secondary_content, secondary_label)
+        
+        combined_sections = []
+        for i in range(min(len(primary_sections), len(secondary_sections))):
+            combined_sections.append({
+                'chapter_number': primary_sections[i]['chapter_number'],
+                'title': primary_sections[i]['title'],
+                'title_second_language': secondary_sections[i]['title'],
+                'content': primary_sections[i]['content'],
+                'content_second_language': secondary_sections[i]['content'],
+                'summary': primary_sections[i]['summary']
+            })
+        return combined_sections
+
+    def split_into_sentence_pairs(self, primary_content, secondary_content):
+        """Split content for ABAB (sentence) format."""
+        def split_into_sentences(text):
+            # Enhanced sentence splitting with preservation of quotes and parentheses
+            sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z"\'(])', text)
+            return [s.strip() for s in sentences if s.strip()]
+
+        # Split both contents into chapters first
+        primary_sections = self.split_into_sections(primary_content, "Chapter")
+        secondary_sections = self.split_into_sections(secondary_content, "Chapter")
+
+        combined_sections = []
+        for p_section, s_section in zip(primary_sections, secondary_sections):
+            primary_sentences = split_into_sentences(p_section['content'])
+            secondary_sentences = split_into_sentences(s_section['content'])
+            
+            # Create sentence pairs while handling potential length mismatches
+            sentence_pairs = []
+            max_sentences = min(len(primary_sentences), len(secondary_sentences))
+            
+            for i in range(max_sentences):
+                sentence_pairs.append({
+                    'primary': primary_sentences[i],
+                    'secondary': secondary_sentences[i]
+                })
+
+            # Add to combined sections
+            combined_sections.append({
+                'chapter_number': p_section['chapter_number'],
+                'title': p_section['title'],
+                'title_second_language': s_section['title'],
+                'sentence_pairs': sentence_pairs,
+                'summary': p_section['summary']
+            })
+
+        return combined_sections
