@@ -21,15 +21,20 @@ from utils import sanitize_filename, get_s3_key, log_memory_usage, build_story_p
 from story_generator import StoryGenerator
 from language_handler import get_language_config, format_language_strings
 
-# Initialize Flask app
+# Update in app.py
 app = Flask(__name__)
+
+# Celery setup - simplified to use your existing config
 app.config['CELERY_BROKER_URL'] = CELERY_CONFIG['BROKER_URL']
 app.config['CELERY_RESULT_BACKEND'] = CELERY_CONFIG['RESULT_BACKEND']
 app.config['MAX_CONTENT_LENGTH'] = FLASK_CONFIG['MAX_CONTENT_LENGTH']
 
-# Initialize Celery
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'], 
-                backend=app.config['CELERY_RESULT_BACKEND'])
+# Initialize Celery with your Redis URL
+celery = Celery(app.name, 
+                broker=CELERY_CONFIG['BROKER_URL'],
+                backend=CELERY_CONFIG['RESULT_BACKEND'])
+
+# Set retry on startup
 celery.conf.broker_connection_retry_on_startup = CELERY_CONFIG['BROKER_CONNECTION_RETRY_ON_STARTUP']
 
 # Initialize CORS
