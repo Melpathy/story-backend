@@ -205,13 +205,16 @@ def handle_language_configs(data):
     custom_language = data.get('custom-language', None)
     primary_config = get_language_config(story_language, custom_language)
     
-    # Check if bilingual mode is enabled
-    if data.get('bilingual-mode') == 'true':
+    # Check if bilingual mode is enabled - handle multiple possible values
+    bilingual_mode = data.get('bilingual-mode', '').lower()
+    if bilingual_mode in ['true', 'on', '1', 'yes']:
         bilingual_language = data.get('bilingual-language', '').lower()
         bilingual_custom = data.get('custom-bilingual-language', None)
+        logging.info(f"Bilingual mode enabled. Language: {bilingual_language}")
         secondary_config = get_language_config(bilingual_language, bilingual_custom)
         return primary_config, secondary_config
     
+    logging.info("Bilingual mode disabled")
     return primary_config, None
 
 @app.route('/api/generate-story', methods=['POST'])
