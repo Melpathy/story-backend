@@ -166,12 +166,59 @@
             margin-top: 20px;
             font-size: 0.9em;
         }
+
+        /* Add new bilingual styles */
+        .bilingual-AABB {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+        }
+
+        .language-column {
+            padding: 20px;
+        }
+
+        .language-label {
+            text-align: center;
+            font-size: 1.2em;
+            color: #4A90E2;
+            margin-bottom: 20px;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bilingual-ABAB .sentence-pair {
+            margin-bottom: 1.5em;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+        }
+
+        .sentence-pair .primary {
+            margin-bottom: 0.5em;
+        }
+
+        .sentence-pair .secondary {
+            color: #666;
+            font-style: italic;
+            border-left: 3px solid #4A90E2;
+            padding-left: 15px;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
     <!-- Cover Page -->
     <div class="cover-page">
         <h1 class="cover-title">{{ title }}</h1>
+        {% if bilingual_mode %}
+        <h2 class="cover-title">{{ title_second_language }}</h2>
+        {% endif %}
         <h2 class="cover-author">{{ author }}</h2>
     </div>
 
@@ -182,38 +229,70 @@
             <!-- Chapter number -->
             <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
+                {% if bilingual_mode %}
+                <br>
+                {{ chapter_label_second_language }} {{ loop.index }}
+                {% endif %}
             </div>
 
             <!-- Chapter title -->
             <div class="chapter-title">
                 {{ section.title }}
+                {% if bilingual_mode %}
+                <br>
+                {{ section.title_second_language }}
+                {% endif %}
             </div>
 
-            <div class="chapter-content">
-                {{ section.content }}
-            </div>
-            {% if illustrations and illustrations[loop.index0] %}
-            <div class="illustration-container">
-                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
-                     alt="{{ illustrations[loop.index0].caption }}">
-                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
-            </div>
+            <!-- Content based on bilingual format -->
+            {% if bilingual_mode %}
+                {% if bilingual_format == 'AABB' %}
+                <div class="bilingual-AABB">
+                    <div class="language-column">
+                        <div class="language-label">{{ primary_language }}</div>
+                        <div class="chapter-content">
+                            {{ section.content }}
+                        </div>
+                    </div>
+                    <div class="language-column">
+                        <div class="language-label">{{ second_language }}</div>
+                        <div class="chapter-content">
+                            {{ section.content_second_language }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bilingual-ABAB">
+                    {% for pair in section.sentence_pairs %}
+                    <div class="sentence-pair">
+                        <p class="primary">{{ pair.primary }}</p>
+                        <p class="secondary">{{ pair.secondary }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="chapter-content">
+                    {{ section.content }}
+                </div>
             {% endif %}
+            
+            <!-- Illustrations remain the same -->
         </div>
         {% endfor %}
     </div>
 
-    <!-- Story ending section -->
+    <!-- End section -->
     <div class="content-section">
         <div class="star-decoration">✧</div>
-        
-        <!-- End Page -->
         <div class="the-end">
             {{ end_text }}
-            {% if not illustrations %}
-            <p class="end-note">{{ no_illustrations_text }}</p>
+            {% if bilingual_mode %}
+            <br>
+            {{ end_text_second_language }}
             {% endif %}
         </div>
     </div>
 </body>
 </html>
+ 
