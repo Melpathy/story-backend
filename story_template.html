@@ -277,10 +277,17 @@
                 </div>
             {% endif %}
             
-            <!-- Illustrations remain the same -->
-        </div>
+           <!-- Illustrations -->
+            {% if illustrations and illustrations[loop.index0] %}
+            <div class="illustration-container">
+                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
+                     alt="{{ illustrations[loop.index0].caption }}">
+                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
+            </div>
+            {% endif %}
+        </div>  <!-- Close chapter div -->
         {% endfor %}
-    </div>
+    </div>  <!-- Close content div -->
 
     <!-- End section -->
     <div class="content-section">
