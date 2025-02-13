@@ -209,6 +209,11 @@ def generate_story():
         story_language = data.get('story-language', 'English').lower()
         custom_language = data.get('custom-language', None)
         lang_config = get_language_config(story_language, custom_language)
+
+        # Setup language configuration
+        bilingual_language = data.get('bilingual-language', None).lower()
+        bilingual_custom = data.get('custom-bilingual-language', None)
+        lang_config = get_language_config(bilingual_language, bilingual_custom)
         
         # Format language strings
         context = {
