@@ -1,3 +1,6 @@
+from config import STORY_LENGTH_CONFIG, API_CONFIG, BASE_URLS
+import request
+
 class StoryGenerator:
     def __init__(self, api_key, replicate_client):
         self.api_key = api_key
