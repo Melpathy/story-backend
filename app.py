@@ -11,6 +11,9 @@ import logging
 import replicate
 from flask_cors import CORS
 
+with open("templates/story_template.html", "r", encoding="utf-8") as f:
+    template_str = f.read()
+template = Template(template_str)
 
 # Import our new modules
 from config import CELERY_CONFIG, FLASK_CONFIG, STORAGE_CONFIG, API_CONFIG, BASE_URLS
@@ -221,7 +224,7 @@ def handle_language_configs(data):
 def generate_story():
     """Handle story and PDF generation request."""
   
-      formatted_primary = {"error_message": "An error occurred while generating your story."}
+    formatted_primary = {"error_message": "An error occurred while generating your story."}
 
     try:
         # Get request data
