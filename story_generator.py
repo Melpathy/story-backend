@@ -1,5 +1,8 @@
-from config import STORY_LENGTH_CONFIG, API_CONFIG, BASE_URLS
+import logging
 import requests
+from config import API_CONFIG, IMAGE_CONFIG, STORY_LENGTH_CONFIG
+import re
+from language_handler import translate_with_mistral
 
 class StoryGenerator:
     def __init__(self, api_key, replicate_client):
