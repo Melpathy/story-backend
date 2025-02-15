@@ -228,23 +228,21 @@ class StoryGenerator:
         combined_sections = []
         
         for p_section, s_section in zip(primary_sections, secondary_sections):
+            # Get all sentences from both languages
             primary_sentences = self._split_into_sentences(p_section['content'])
             secondary_sentences = self._split_into_sentences(s_section['content'])
             
-            # Balance sentence counts
-            if len(primary_sentences) > len(secondary_sentences):
-                logging.warning("More primary sentences than secondary, truncating primary")
-                primary_sentences = primary_sentences[:len(secondary_sentences)]
-            elif len(secondary_sentences) > len(primary_sentences):
-                logging.warning("More secondary sentences than primary, truncating secondary")
-                secondary_sentences = secondary_sentences[:len(primary_sentences)]
-                
+            # Create pairs without worrying about count matching
             sentence_pairs = []
-            for p_sent, s_sent in zip(primary_sentences, secondary_sentences):
-                sentence_pairs.append({
-                    'primary': p_sent,
-                    'secondary': s_sent
-                })
+            # Take all sentences without truncating
+            max_sentences = max(len(primary_sentences), len(secondary_sentences))
+            
+            for i in range(max_sentences):
+                pair = {
+                    'primary': primary_sentences[i] if i < len(primary_sentences) else "",
+                    'secondary': secondary_sentences[i] if i < len(secondary_sentences) else ""
+                }
+                sentence_pairs.append(pair)
             
             chapter_section = {
                 'chapter_number': p_section['chapter_number'],
