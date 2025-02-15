@@ -84,30 +84,21 @@ class StoryGenerator:
         response = requests.post(url, json=payload, headers=headers)
         return response.json() if response.status_code == 200 else None
 
-    # Translation Methods
     def translate_story(self, content, target_language, format_type):
         """Translate story content using Mistral API."""
         try:
             chunks = self._split_for_translation(content)
             translated_chunks = []
-            max_retries = 3
             
             for chunk in chunks:
-                for attempt in range(max_retries):
-                    try:
-                        translated_text = translate_with_mistral(chunk, target_language)
-                        if self._validate_translation(translated_text, chunk):
-                            translated_chunks.append(translated_text)
-                            break
-                        else:
-                            logging.warning(f"Invalid translation on attempt {attempt + 1}")
-                    except Exception as e:
-                        if attempt == max_retries - 1:
-                            raise e
-                        logging.warning(f"Translation attempt {attempt + 1} failed: {str(e)}")
-            
+                translated_text = translate_with_mistral(chunk, target_language)
+                if translated_text:  # Just check if we got something back
+                    translated_chunks.append(translated_text)
+                else:
+                    logging.warning("Empty translation received for chunk")
+                    
             return self._reconstruct_story(translated_chunks, format_type)
-            
+                
         except Exception as e:
             logging.error(f"Translation error: {str(e)}")
             return content
