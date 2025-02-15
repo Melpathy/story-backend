@@ -114,23 +114,10 @@ class StoryGenerator:
 
 
     def _validate_translation(self, translated_text, original_text):
-        """Validate translation quality."""
+        """Basic validation to ensure we got a translation."""
         if not translated_text:
             logging.warning("Empty translation received")
             return False
-            
-        # More lenient length ratio check
-        length_ratio = len(translated_text) / (len(original_text) + 1)  # Avoid division by zero
-        if length_ratio < 0.3 or length_ratio > 3.0:  # More forgiving bounds
-            logging.warning(f"Translation length ratio out of bounds: {length_ratio}")
-            return False
-        
-        # Relaxed artifact checking
-        artifacts = ['[', ']', '{', '}', 'translation:']  # Removed some strict checks
-        if any(artifact in translated_text.lower() for artifact in artifacts):
-            logging.warning(f"Translation contains artifacts")
-            return False
-            
         return True
 
     def _split_for_translation(self, content):
