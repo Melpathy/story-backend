@@ -87,31 +87,31 @@ class StoryGenerator:
             self.logger.error(f"Translation error: {str(e)}")
             return content
 
-def split_into_parallel_sections(self, primary_content, secondary_content, primary_label, secondary_label):
-    try:
-        self.logger.info(f"Splitting content. Primary starts with: {primary_content[:200]}")
-        self.logger.info(f"Secondary starts with: {secondary_content[:200]}")
-        
-        primary_chapters = self._split_chapters(primary_content, primary_label)
-        secondary_chapters = self._split_chapters(secondary_content, secondary_label)
-        
-        self.logger.info(f"Split chapters. Primary count: {len(primary_chapters)}")
-        self.logger.info(f"First primary chapter: {primary_chapters[0] if primary_chapters else 'None'}")
-        
-        sections = self._combine_parallel_sections(
-            primary_chapters,
-            secondary_chapters,
-            primary_label,
-            secondary_label
-        )
-        
-        self.logger.info(f"Generated {len(sections)} sections")
-        self.logger.info(f"First section: {sections[0] if sections else 'None'}")
-        
-        return sections
-    except Exception as e:
-        self.logger.error(f"Error in parallel section splitting: {str(e)}", exc_info=True)
-        return []
+    def split_into_parallel_sections(self, primary_content, secondary_content, primary_label, secondary_label):
+        try:
+            self.logger.info(f"Splitting content. Primary starts with: {primary_content[:200]}")
+            self.logger.info(f"Secondary starts with: {secondary_content[:200]}")
+            
+            primary_chapters = self._split_chapters(primary_content, primary_label)
+            secondary_chapters = self._split_chapters(secondary_content, secondary_label)
+            
+            self.logger.info(f"Split chapters. Primary count: {len(primary_chapters)}")
+            self.logger.info(f"First primary chapter: {primary_chapters[0] if primary_chapters else 'None'}")
+            
+            sections = self._combine_parallel_sections(
+                primary_chapters,
+                secondary_chapters,
+                primary_label,
+                secondary_label
+            )
+            
+            self.logger.info(f"Generated {len(sections)} sections")
+            self.logger.info(f"First section: {sections[0] if sections else 'None'}")
+            
+            return sections
+        except Exception as e:
+            self.logger.error(f"Error in parallel section splitting: {str(e)}", exc_info=True)
+            return []
 
     def split_into_sentence_pairs(
         self, 
