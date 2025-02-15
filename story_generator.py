@@ -64,7 +64,7 @@ class StoryGenerator:
         Args:
             content (str): Original story content
             target_language (str): Target language for translation
-            format_type (str): Format type ('AABB' or 'ABAB')
+            format_type (str): Format type ('AABB' for side-by-side or 'ABAB' for alternating sentences)
             
         Returns:
             str: Translated story content
@@ -147,6 +147,29 @@ class StoryGenerator:
             self.logger.error(f"Error in sentence pair splitting: {str(e)}", exc_info=True)
             return []
 
+    def split_into_sections(self, story_text: str, chapter_label: str) -> List[Dict]:
+        """
+        Split a generated story into sections based on chapter markers for non-bilingual mode.
+
+        Args:
+            story_text (str): Generated story text
+            chapter_label (str): Chapter label (e.g., "Chapter", "Chapitre")
+
+        Returns:
+            List[Dict]: List of sections with chapter number, title, content, and summary
+        """
+        chapters = self._split_chapters(story_text, chapter_label)
+        sections = []
+        for i, chap in enumerate(chapters):
+            parts = self._extract_chapter_parts(chap)
+            sections.append({
+                'chapter_number': f"{chapter_label} {i+1}",
+                'title': parts['title'],
+                'content': parts['content'],
+                'summary': self._generate_summary(parts['content'])
+            })
+        return sections
+
     def generate_illustration(self, prompt: str) -> Optional[str]:
         """
         Generate illustration using Replicate API.
@@ -225,7 +248,6 @@ class StoryGenerator:
 
     def _restore_chapter_labels(self, content: str, target_language: str) -> str:
         """Restore special tokens while maintaining consistent formatting."""
-        # Restore only special characters and formatting
         replacements = {
             "###ELLIPSIS###": "...",
             "###MR###": "Mr.",
@@ -342,14 +364,10 @@ class StoryGenerator:
         if not text:
             return []
             
-        # Temporarily replace special cases
         preserved_text = self._preserve_special_tokens(text)
-        
-        # Split on sentence endings while preserving quotations
         pattern = r'(?<=[.!?])\s+(?=[A-Z]|"[A-Z])'
         sentences = re.split(pattern, preserved_text)
         
-        # Restore special cases and clean
         return [
             self._restore_chapter_labels(sentence.strip(), "english")
             for sentence in sentences
@@ -401,24 +419,8 @@ class StoryGenerator:
         Returns:
             List[str]: List of content chunks ready for translation
         """
-        # Split on chapter markers
-        chapter_pattern = r'(###CHAPTER###\s*\d+:?)'
-        chapter_splits = re.split(chapter_pattern, content)
-        
-        chunks = []
-        current_chunk = ""
-        
-        for i in range(0, len(chapter_splits)):
-            if i % 2 == 0:  # Content
-                if chapter_splits[i].strip():
-                    chunks.append(current_chunk + chapter_splits[i])
-                    current_chunk = ""
-            else:  # Chapter header
-                current_chunk = chapter_splits[i] + "\n"
-        
-        if current_chunk:
-            chunks.append(current_chunk)
-            
+        # For simplicity, split on double newlines (paragraphs)
+        chunks = content.split("\n\n")
         return [chunk.strip() for chunk in chunks if chunk.strip()]
 
     def _reconstruct_story(self, chunks: List[str], format_type: str) -> str:
@@ -427,7 +429,7 @@ class StoryGenerator:
         
         Args:
             chunks (List[str]): Translated story chunks
-            format_type (str): Format specification ('AABB' or 'ABAB')
+            format_type (str): Format specification ('ABAB' or 'AABB')
             
         Returns:
             str: Reconstructed story with proper formatting
@@ -435,101 +437,17 @@ class StoryGenerator:
         if not chunks:
             return ""
             
-        if format_type == 'ABAB':
-            # For sentence-by-sentence alternation, maintain spacing
-            return "\n\n".join(
-                chunk.strip()
-                for chunk in chunks
-                if chunk.strip()
-            )
+        if format_type.upper() == 'ABAB':
+            # For sentence-by-sentence alternation, join with extra newlines
+            return "\n\n".join(chunk for chunk in chunks if chunk)
         else:
-            # For side-by-side format, maintain chapter structure
+            # For side-by-side (AABB), join chunks with clear chapter spacing
             reconstructed = []
             for chunk in chunks:
                 cleaned_chunk = chunk.strip()
                 if cleaned_chunk:
-                    # Add proper spacing around chapter headers
                     if re.match(r'^(Chapter|Chapitre|Capítulo|Kapitel)\s*\d+:', cleaned_chunk):
                         reconstructed.append(f"\n{cleaned_chunk}\n")
                     else:
                         reconstructed.append(cleaned_chunk)
-                        
             return "\n".join(reconstructed)
-
-    def generate_parallel_story(
-        self, 
-        prompt: str, 
-        primary_label: str,
-        secondary_label: str,
-        target_language: str,
-        format_type: str = 'AABB',
-        story_length: str = 'short'
-    ) -> Dict:
-        """
-        Generate a complete bilingual story with all necessary components.
-        
-        Args:
-            prompt (str): Story generation prompt
-            primary_label (str): Chapter label in primary language
-            secondary_label (str): Chapter label in secondary language
-            target_language (str): Target language for translation
-            format_type (str): Format specification ('AABB' or 'ABAB')
-            story_length (str): Story length specification
-            
-        Returns:
-            Dict: Complete story package with both languages and all sections
-        """
-        try:
-            # Generate primary story
-            primary_story = self.generate_story(prompt, primary_label, story_length)
-            if "Error generating story" in primary_story:
-                raise ValueError("Failed to generate primary story")
-
-            # Translate to secondary language
-            secondary_story = self.translate_story(
-                primary_story,
-                target_language,
-                format_type
-            )
-
-            # Split into appropriate format
-            if format_type == 'AABB':
-                sections = self.split_into_parallel_sections(
-                    primary_story,
-                    secondary_story,
-                    primary_label,
-                    secondary_label
-                )
-            else:
-                sections = self.split_into_sentence_pairs(
-                    primary_story,
-                    secondary_story
-                )
-
-            # Generate illustrations if configured
-            illustrations = None
-            if IMAGE_CONFIG.get('ENABLED', False):
-                illustrations = []
-                for section in sections:
-                    if section.get('summary'):
-                        illustration = self.generate_illustration(section['summary'])
-                        illustrations.append({
-                            'url': illustration,
-                            'caption': section['summary']
-                        } if illustration else None)
-
-            return {
-                'sections': sections,
-                'illustrations': illustrations,
-                'format_type': format_type,
-                'primary_language': 'english',
-                'secondary_language': target_language
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error generating parallel story: {str(e)}", exc_info=True)
-            return {
-                'error': f"Failed to generate story: {str(e)}",
-                'sections': [],
-                'illustrations': None
-            }
