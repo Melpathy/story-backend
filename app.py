@@ -281,5 +281,51 @@ def download_file(filename):
             "message": str(e)
         }), 500
 
+@app.route('/task-status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    """Check Celery task status and return S3 URL if ready."""
+    try:
+        task = generate_pdf_task.AsyncResult(task_id)
+        
+        # Get language configuration
+        lang_config = get_language_config('english')
+        formatted_lang = format_language_strings(lang_config, {'name': '', 'author': ''})
+
+        if task.state == "PENDING":
+            return jsonify({
+                "status": "pending", 
+                "message": formatted_lang['loading_message']
+            })
+
+        elif task.state == "SUCCESS":
+            s3_url = task.result
+            if s3_url:
+                return jsonify({
+                    "status": "completed",
+                    "pdf_url": s3_url,
+                    "message": formatted_lang['success_message']
+                })
+            return jsonify({
+                "status": "error", 
+                "message": formatted_lang['error_message']
+            }), 500
+
+        elif task.state == "FAILURE":
+            return jsonify({
+                "status": "error",
+                "message": str(task.result)
+            }), 500
+
+        return jsonify({
+            "status": task.state, 
+            "message": formatted_lang['processing_message']
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
