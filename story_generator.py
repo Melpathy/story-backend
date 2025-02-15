@@ -58,20 +58,31 @@ class StoryGenerator:
             return f"Error generating story: {str(e)}"
 
     def translate_story(self, content: str, target_language: str, format_type: str) -> str:
+        """
+        Translate story content using Mistral API.
+        
+        Args:
+            content (str): Original story content
+            target_language (str): Target language for translation
+            format_type (str): Format type ('AABB' or 'ABAB')
+            
+        Returns:
+            str: Translated story content
+        """
         try:
-            # Get chapter label from language config
-            chapter_label = self.get_language_chapter_label(target_language)
+            # Split content into manageable chunks
+            chunks = self._split_for_translation(content)
+            translated_chunks = []
             
-            # Replace chapter marker before translation
-            content = content.replace("Chapter", chapter_label)
+            # Translate each chunk
+            for chunk in chunks:
+                translated_text = translate_with_mistral(chunk, target_language)
+                if translated_text:
+                    translated_chunks.append(translated_text)
             
-            # Preserve other special tokens
-            preserved_content = self._preserve_special_tokens(content)
-            
-            # Translate and restore
-            translated = translate_with_mistral(preserved_content, target_language)
-            return self._restore_chapter_labels(translated, target_language)
-            
+            # Reconstruct the story in the proper format
+            return self._reconstruct_story(translated_chunks, format_type)
+                
         except Exception as e:
             self.logger.error(f"Translation error: {str(e)}")
             return content
