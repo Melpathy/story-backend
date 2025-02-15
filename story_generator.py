@@ -92,11 +92,9 @@ class StoryGenerator:
             
             for chunk in chunks:
                 translated_text = translate_with_mistral(chunk, target_language)
-                if translated_text:  # Just check if we got something back
+                if translated_text:
                     translated_chunks.append(translated_text)
-                else:
-                    logging.warning("Empty translation received for chunk")
-                    
+                
             return self._reconstruct_story(translated_chunks, format_type)
                 
         except Exception as e:
