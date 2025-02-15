@@ -112,7 +112,8 @@ class StoryGenerator:
             logging.error(f"Translation error: {str(e)}")
             return content
 
-   def _validate_translation(self, translated_text, original_text):
+
+    def _validate_translation(self, translated_text, original_text):
         """Validate translation quality."""
         if not translated_text:
             logging.warning("Empty translation received")
@@ -241,7 +242,7 @@ class StoryGenerator:
             })
         return combined_sections
 
-   def split_into_sentence_pairs(self, primary_content, secondary_content):
+    def split_into_sentence_pairs(self, primary_content, secondary_content):
         """Split content for ABAB (sentence) format."""
         primary_sections = self.split_into_sections(primary_content, "Chapter")
         secondary_sections = self.split_into_sections(secondary_content, "Chapter")
