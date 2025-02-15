@@ -82,93 +82,8 @@
             font-style: italic;
         }
         
-        .cover-author {
-            font-size: 1.5em;
-            color: #666;
-            font-style: italic;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-        }
-        
-        /* Chapter styles */
-        .chapter {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            page-break-before: always;
-        }
-        
-        .chapter::before {
-            content: "✧";
-            display: block;
-            text-align: center;
-            color: #4A90E2;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-        
-        .chapter-title {
-            text-align: center;
-            font-size: 1.6em;
-            color: #2E86C1;
-            margin: 30px 0 60px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            position: relative;
-        }
-        
-        .chapter-number {
-            text-align: center;
-            font-size: 1.6em;
-            color: #333;
-            margin-bottom: 30px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
-        }
-        
-        .chapter-content {
-            font-size: 1.2em;
-            text-align: justify;
-            padding: 20px 20px 0 20px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        
-        /* Star decoration */
-        .star-decoration {
-            text-align: center;
-            color: #4A90E2;
-            font-size: 1.5em;
-            margin: 30px 0;
-        }
-        
-        /* End page styles */
-        .the-end {
-            text-align: center;
-            font-size: 2.5em;
-            color: #E67E22;
-            margin-top: 60px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            page-break-before: always;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
-        }
-        
-        .end-note {
-            font-style: italic;
-            color: #666;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-
-        /* Add new bilingual styles */
-        .bilingual-AABB {
+        /* Bilingual styles */
+        .bilingual-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2em;
@@ -177,7 +92,7 @@
             border-radius: 15px;
         }
 
-        .language-column {
+        .primary-column, .secondary-column {
             padding: 20px;
         }
 
@@ -192,28 +107,30 @@
             border-bottom: 1px solid #eee;
         }
 
-        .bilingual-ABAB .sentence-pair {
+        .alternating-content .sentence-pair {
             margin-bottom: 1.5em;
             padding: 15px;
             background: rgba(255, 255, 255, 0.7);
             border-radius: 15px;
         }
 
-        .sentence-pair .primary {
-            margin-bottom: 0.5em;
+        .primary-sentence {
+            margin-bottom: 10px;
         }
 
-        .sentence-pair .secondary {
+        .secondary-sentence {
             color: #666;
             font-style: italic;
+            padding-left: 20px;
             border-left: 3px solid #4A90E2;
-            padding-left: 15px;
             margin-top: 8px;
         }
     </style>
 </head>
 <body>
-    <!-- Cover Page -->
+</head>
+<body>
+    <!-- Cover Page - This is fine -->
     <div class="cover-page">
         <h1 class="cover-title">{{ title }}</h1>
         {% if bilingual_mode %}
@@ -222,51 +139,51 @@
         <h2 class="cover-author">{{ author }}</h2>
     </div>
 
-    <!-- Story Content -->
+    <!-- Story Content - This needs fixing -->
     <div class="content">
         {% for section in sections %}
         <div class="chapter">
-            <!-- Chapter number -->
+            <!-- Chapter number - Keep combined -->
             <div class="chapter-number">
-                {{ chapter_label }} {{ loop.index }}
                 {% if bilingual_mode %}
-                <br>
-                {{ chapter_label_second_language }} {{ loop.index }}
+                    {{ chapter_label }} {{ loop.index }} / {{ chapter_label_second_language }} {{ loop.index }}
+                {% else %}
+                    {{ chapter_label }} {{ loop.index }}
                 {% endif %}
             </div>
 
-            <!-- Chapter title -->
+            <!-- Chapter title - Keep combined -->
             <div class="chapter-title">
-                {{ section.title }}
                 {% if bilingual_mode %}
-                <br>
-                {{ section.title_second_language }}
+                    {{ section.title }}
+                    <br>
+                    {{ section.title_second_language }}
+                {% else %}
+                    {{ section.title }}
                 {% endif %}
             </div>
 
-            <!-- Content based on bilingual format -->
+            <!-- Content based on format -->
             {% if bilingual_mode %}
                 {% if bilingual_format == 'AABB' %}
-                <div class="bilingual-AABB">
-                    <div class="language-column">
+                <!-- Side by side format -->
+                <div class="bilingual-content">
+                    <div class="primary-column">
                         <div class="language-label">{{ primary_language }}</div>
-                        <div class="chapter-content">
-                            {{ section.content }}
-                        </div>
+                        <div class="chapter-content">{{ section.content }}</div>
                     </div>
-                    <div class="language-column">
+                    <div class="secondary-column">
                         <div class="language-label">{{ second_language }}</div>
-                        <div class="chapter-content">
-                            {{ section.content_second_language }}
-                        </div>
+                        <div class="chapter-content">{{ section.content_second_language }}</div>
                     </div>
                 </div>
                 {% else %}
-                <div class="bilingual-ABAB">
+                <!-- Alternating sentences format -->
+                <div class="alternating-content">
                     {% for pair in section.sentence_pairs %}
                     <div class="sentence-pair">
-                        <p class="primary">{{ pair.primary }}</p>
-                        <p class="secondary">{{ pair.secondary }}</p>
+                        <div class="primary-sentence">{{ pair.primary }}</div>
+                        <div class="secondary-sentence">{{ pair.secondary }}</div>
                     </div>
                     {% endfor %}
                 </div>
@@ -276,8 +193,8 @@
                     {{ section.content }}
                 </div>
             {% endif %}
-            
-           <!-- Illustrations -->
+
+            <!-- Illustrations - Keep as is -->
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
                 <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
@@ -285,21 +202,58 @@
                 <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
             </div>
             {% endif %}
-        </div>  <!-- Close chapter div -->
+        </div>
         {% endfor %}
-    </div>  <!-- Close content div -->
+    </div>
 
-    <!-- End section -->
+    <!-- End section - Simplified -->
     <div class="content-section">
         <div class="star-decoration">✧</div>
         <div class="the-end">
-            {{ end_text }}
             {% if bilingual_mode %}
-            <br>
-            {{ end_text_second_language }}
+                {{ end_text }} / {{ end_text_second_language }}
+            {% else %}
+                {{ end_text }}
             {% endif %}
         </div>
     </div>
+
+    <style>
+        /* Updated styles */
+        .bilingual-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            margin: 20px 0;
+        }
+
+        .primary-column, .secondary-column {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+        }
+
+        .language-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4A90E2;
+        }
+
+        .alternating-content .sentence-pair {
+            margin-bottom: 20px;
+        }
+
+        .primary-sentence {
+            margin-bottom: 10px;
+        }
+
+        .secondary-sentence {
+            color: #666;
+            font-style: italic;
+            padding-left: 20px;
+            border-left: 3px solid #4A90E2;
+        }
+    </style>
 </body>
 </html>
- 
