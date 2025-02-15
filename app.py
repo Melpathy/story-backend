@@ -206,7 +206,7 @@ def generate_story():
             )
         
         logging.info("📝 Generated sections:")
-         for section in sections:
+        for section in sections:
             logging.info(f"Section: {section}")
         
         log_memory_usage("Before PDF Generation")
