@@ -174,6 +174,8 @@ def generate_story():
             formatted_primary['chapter_label'],
             story_length=story_length
         )
+        logging.info(f"📝 Generated primary story: {primary_story[:500]}...")  # Add this
+
 
         # Handle bilingual mode if enabled
         if data.get('bilingual-mode') == 'true':
@@ -183,6 +185,8 @@ def generate_story():
                 data.get('bilingual-language', ''),
                 bilingual_format
             )
+            logging.info(f"📝 Generated secondary story: {secondary_story[:500]}...")  # Add this
+
             if bilingual_format == 'AABB':
                 sections = story_generator.split_into_parallel_sections(
                     primary_story,
@@ -200,7 +204,11 @@ def generate_story():
                 primary_story, 
                 formatted_primary['chapter_label']
             )
-          
+        
+        logging.info("📝 Generated sections:")
+         for section in sections:
+            logging.info(f"Section: {section}")
+        
         log_memory_usage("Before PDF Generation")
         rendered_html = template.render(
             title=formatted_primary['story_title'],
