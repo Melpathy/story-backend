@@ -70,7 +70,7 @@ def translate_with_mistral(text, target_language):
         }
         
         # Enhanced prompt to enforce single language translation
-        system_prompt = f"""You are a translator. You must ONLY translate to {target_language}.
+        system_prompt = f"""You are a professional translator. You must ONLY translate to {target_language}.
         Never translate to any other language. Return ONLY a JSON object with the translation.
         Format: {{"translation": "your translated text"}}"""
 
