@@ -112,13 +112,25 @@ class StoryGenerator:
             logging.error(f"Translation error: {str(e)}")
             return content
 
-    def _validate_translation(self, translated_text, original_text):
+   def _validate_translation(self, translated_text, original_text):
         """Validate translation quality."""
-        if not translated_text or len(translated_text) < len(original_text) * 0.5:
+        if not translated_text:
+            logging.warning("Empty translation received")
+            return False
+            
+        # More lenient length ratio check
+        length_ratio = len(translated_text) / (len(original_text) + 1)  # Avoid division by zero
+        if length_ratio < 0.3 or length_ratio > 3.0:  # More forgiving bounds
+            logging.warning(f"Translation length ratio out of bounds: {length_ratio}")
             return False
         
-        artifacts = ['[', ']', '{', '}', 'translate:', 'translation:']
-        return not any(artifact in translated_text.lower() for artifact in artifacts)
+        # Relaxed artifact checking
+        artifacts = ['[', ']', '{', '}', 'translation:']  # Removed some strict checks
+        if any(artifact in translated_text.lower() for artifact in artifacts):
+            logging.warning(f"Translation contains artifacts")
+            return False
+            
+        return True
 
     def _split_for_translation(self, content):
         """Split content into manageable chunks for translation."""
@@ -229,7 +241,7 @@ class StoryGenerator:
             })
         return combined_sections
 
-    def split_into_sentence_pairs(self, primary_content, secondary_content):
+   def split_into_sentence_pairs(self, primary_content, secondary_content):
         """Split content for ABAB (sentence) format."""
         primary_sections = self.split_into_sections(primary_content, "Chapter")
         secondary_sections = self.split_into_sections(secondary_content, "Chapter")
@@ -240,19 +252,19 @@ class StoryGenerator:
             primary_sentences = self._split_into_sentences(p_section['content'])
             secondary_sentences = self._split_into_sentences(s_section['content'])
             
+            # Balance sentence counts
+            if len(primary_sentences) > len(secondary_sentences):
+                logging.warning("More primary sentences than secondary, truncating primary")
+                primary_sentences = primary_sentences[:len(secondary_sentences)]
+            elif len(secondary_sentences) > len(primary_sentences):
+                logging.warning("More secondary sentences than primary, truncating secondary")
+                secondary_sentences = secondary_sentences[:len(primary_sentences)]
+                
             sentence_pairs = []
-            max_sentences = min(len(primary_sentences), len(secondary_sentences))
-            
-            if len(primary_sentences) != len(secondary_sentences):
-                logging.warning(
-                    f"Sentence count mismatch: {len(primary_sentences)} primary vs "
-                    f"{len(secondary_sentences)} secondary sentences"
-                )
-            
-            for i in range(max_sentences):
+            for p_sent, s_sent in zip(primary_sentences, secondary_sentences):
                 sentence_pairs.append({
-                    'primary': primary_sentences[i],
-                    'secondary': secondary_sentences[i]
+                    'primary': p_sent,
+                    'secondary': s_sent
                 })
             
             chapter_section = {
