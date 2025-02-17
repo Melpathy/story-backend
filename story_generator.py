@@ -21,7 +21,7 @@ class StoryGenerator:
         chapters = re.split(chapter_pattern, content)
         return [ch.strip() for ch in chapters if ch.strip()]
     
-    def split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
+    def _split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
         """Splits content into parallel sections for AABB format."""
         primary_chapters = self._split_chapters(primary_content, primary_label)
         secondary_chapters = self._split_chapters(secondary_content, secondary_label)
@@ -56,11 +56,33 @@ class StoryGenerator:
             self.logger.error(f"Story generation error: {str(e)}")
             return f"Error generating story: {str(e)}"
     
+    def translate_story(self, content: str, target_language: str, format_type: str) -> str:
+        """
+        Translate story content using Mistral API.
+        Handles ABAB (sentence-based) and AABB (chapter-based) translation.
+        """
+        try:
+            primary_chapters = self._split_chapters(content, "Chapter")
+            translated_chapters = []
+            
+            if format_type.upper() == "ABAB":
+                for chapter in primary_chapters:
+                    sentences = self.split_into_sentences(chapter)
+                    translated_sentences = [translate_with_mistral(sentence, target_language) for sentence in sentences]
+                    translated_chapters.append(" ".join(translated_sentences))
+            else:
+                translated_chapters = [translate_with_mistral(chapter, target_language) for chapter in primary_chapters]
+                
+            return "\n\n".join(translated_chapters)
+        except Exception as e:
+            self.logger.error(f"Translation error: {str(e)}")
+            return content
+    
     def generate_bilingual_story(self, text: str, target_language: str, format_type: str) -> List[Dict]:
         """Generates and formats a bilingual story in the requested format."""
         self.logger.info(f"Generating bilingual story: format={format_type}, language={target_language}")
         if format_type.upper() == "AABB":
-            sections = self.split_into_parallel_sections(
+            sections = self._split_into_parallel_sections(
                 text,
                 self.translate_story(text, target_language, format_type),
                 "Chapter",
