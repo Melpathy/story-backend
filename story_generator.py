@@ -21,17 +21,26 @@ class StoryGenerator:
         chapters = re.split(chapter_pattern, content)
         return [ch.strip() for ch in chapters if ch.strip()]
     
+    def _split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
+        """Splits content into parallel sections for AABB format."""
+        primary_chapters = self._split_chapters(primary_content, primary_label)
+        secondary_chapters = self._split_chapters(secondary_content, secondary_label)
+        
+        combined_sections = []
+        for i in range(min(len(primary_chapters), len(secondary_chapters))):
+            section = {
+                'chapter_number': f"{primary_label} {i+1}",
+                'chapter_number_second_language': f"{secondary_label} {i+1}",
+                'content': primary_chapters[i],
+                'content_second_language': secondary_chapters[i]
+            }
+            combined_sections.append(section)
+        
+        return combined_sections
+    
     def generate_story(self, prompt: str, chapter_label: str, story_length: str = "short") -> str:
         """
         Generate a story using the Mistral API with specified length and structure.
-        
-        Args:
-            prompt (str): The story prompt including character and plot details
-            chapter_label (str): Label to use for chapters (e.g., "Chapter", "Chapitre")
-            story_length (str): Length specification ("short", "medium", "long")
-        
-        Returns:
-            str: Generated story text with proper chapter structure
         """
         try:
             length_config = STORY_LENGTH_CONFIG.get(story_length, STORY_LENGTH_CONFIG["short"])
@@ -68,30 +77,24 @@ class StoryGenerator:
             self.logger.error(f"Translation error: {str(e)}")
             return content
     
-    def format_bilingual_story(self, primary_text: str, target_language: str, format_type: str) -> List[Dict]:
-        """Formats the bilingual story according to the selected format (AABB or ABAB)."""
+    def generate_bilingual_story(self, text: str, target_language: str, format_type: str) -> List[Dict]:
+        """Generates and formats a bilingual story in the requested format."""
         if format_type.upper() == "AABB":
-            return [{
-                "content": primary_text,
-                "content_second_language": self.translate_story(primary_text, target_language, format_type)
-            }]
-        else:  # ABAB
-            primary_sentences = self.split_into_sentences(primary_text)
-            secondary_sentences = self.split_into_sentences(self.translate_story(primary_text, target_language, format_type))
+            return self._split_into_parallel_sections(
+                text,
+                self.translate_story(text, target_language, format_type),
+                "Chapter",
+                "Chapitre"
+            )
+        else:
+            primary_sentences = self.split_into_sentences(text)
+            secondary_sentences = self.split_into_sentences(self.translate_story(text, target_language, format_type))
             return [{
                 "sentence_pairs": [
                     {"primary": primary_sentences[i], "secondary": secondary_sentences[i]}
                     for i in range(min(len(primary_sentences), len(secondary_sentences)))
                 ]
             }]
-    
-    def generate_bilingual_story(self, text: str, target_language: str, format_type: str) -> List[Dict]:
-        """Generates and formats a bilingual story in the requested format."""
-        return self.format_bilingual_story(text, target_language, format_type)
-    
-    def split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
-        """Splits content into parallel sections (AABB format)."""
-        return self._split_into_parallel_sections(primary_content, secondary_content, primary_label, secondary_label)
     
     def generate_illustration(self, prompt: str) -> str:
         """Generate an illustration using Replicate AI."""
