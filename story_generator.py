@@ -21,7 +21,7 @@ class StoryGenerator:
         chapters = re.split(chapter_pattern, content)
         return [ch.strip() for ch in chapters if ch.strip()]
     
-    def _split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
+    def split_into_parallel_sections(self, primary_content: str, secondary_content: str, primary_label: str, secondary_label: str) -> List[Dict]:
         """Splits content into parallel sections for AABB format."""
         primary_chapters = self._split_chapters(primary_content, primary_label)
         secondary_chapters = self._split_chapters(secondary_content, secondary_label)
@@ -82,7 +82,7 @@ class StoryGenerator:
         """Generates and formats a bilingual story in the requested format."""
         self.logger.info(f"Generating bilingual story: format={format_type}, language={target_language}")
         if format_type.upper() == "AABB":
-            sections = self._split_into_parallel_sections(
+            sections = self.split_into_parallel_sections(
                 text,
                 self.translate_story(text, target_language, format_type),
                 "Chapter",
