@@ -49,26 +49,6 @@ class StoryGenerator:
             self.logger.error(f"Error calling Mistral API: {str(e)}")
             return None
     
-    def _verify_story_completion(self, story_text: str) -> bool:
-        """Checks if the story has a proper ending."""
-        ending_indicators = ["The End", "Fin", "Ende", "concluded", "finally", "last", "happily ever after"]
-        last_paragraphs = story_text.split('\n')[-3:]
-        text_to_check = ' '.join(last_paragraphs).lower()
-        return any(indicator.lower() in text_to_check for indicator in ending_indicators)
-    
-    def _ensure_story_completion(self, story_text: str, chapter_label: str, max_tokens: int) -> str:
-        """Attempts to generate a proper ending if needed."""
-        completion_prompt = f"""
-        Complete this story with a proper ending (1-2 paragraphs maximum):
-        
-        {story_text}
-        """
-        response = self._call_mistral_api(completion_prompt, max_tokens=200)
-        if response and "choices" in response and response["choices"]:
-            ending = response["choices"][0]["message"]["content"]
-            return f"{story_text}\n\n{ending}"
-        return story_text
-    
     def generate_story(self, prompt: str, chapter_label: str, story_length: str = "short") -> str:
         """Generate a structured story using Mistral API."""
         try:
@@ -88,11 +68,31 @@ class StoryGenerator:
             response = self._call_mistral_api(formatted_prompt, max_tokens)
             if response and "choices" in response and response["choices"]:
                 story_text = response["choices"][0]["message"]["content"]
-                if self._verify_story_completion(story_text):
-                    return story_text
-                else:
-                    return self._ensure_story_completion(story_text, chapter_label, max_tokens)
+                return story_text
             return "Error generating story."
         except Exception as e:
             self.logger.error(f"Story generation error: {str(e)}")
             return f"Error generating story: {str(e)}"
+    
+    def generate_bilingual_story(self, text: str, target_language: str, format_type: str) -> List[Dict]:
+        """Generates and formats a bilingual story in the requested format."""
+        self.logger.info(f"Generating bilingual story: format={format_type}, language={target_language}")
+        
+        primary_story = self.generate_story(text, "Chapter")
+        secondary_story = translate_with_mistral(primary_story, target_language)
+        
+        if format_type.upper() == "AABB":
+            sections = self.split_into_parallel_sections(
+                primary_story,
+                secondary_story,
+                "Chapter",
+                "Chapitre"
+            )
+            self.logger.info(f"Generated sections (AABB mode): {sections}")
+            return sections
+        else:
+            primary_sentences = self.split_into_sentences(primary_story)
+            secondary_sentences = self.split_into_sentences(secondary_story)
+            sentence_pairs = [{"primary": primary_sentences[i], "secondary": secondary_sentences[i]} for i in range(min(len(primary_sentences), len(secondary_sentences)))]
+            self.logger.info(f"Generated sentence pairs (ABAB mode): {sentence_pairs}")
+            return [{"sentence_pairs": sentence_pairs}]
