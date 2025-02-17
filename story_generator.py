@@ -66,13 +66,13 @@ class StoryGenerator:
                 "Chapter",
                 "Chapitre"
             )
-            self.logger.info(f"Generated sections: {sections}")
+            self.logger.info(f"Generated sections (AABB mode): {sections}")
             return sections
         else:
             primary_sentences = self.split_into_sentences(text)
             secondary_sentences = self.split_into_sentences(self.translate_story(text, target_language, format_type))
             sentence_pairs = [{"primary": primary_sentences[i], "secondary": secondary_sentences[i]} for i in range(min(len(primary_sentences), len(secondary_sentences)))]
-            self.logger.info(f"Generated sentence pairs: {sentence_pairs}")
+            self.logger.info(f"Generated sentence pairs (ABAB mode): {sentence_pairs}")
             return [{"sentence_pairs": sentence_pairs}]
     
     def generate_illustration(self, prompt: str) -> str:
