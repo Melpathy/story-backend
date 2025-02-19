@@ -15,15 +15,13 @@
             margin: 0;
             padding: 0;
         }
-
-        /* Main container for centering content and giving a book-like look */
+        /* Main container for centering content and giving a book-like appearance */
         .main-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-
-        /* Cover Page (kept from your original) */
+        /* Cover Page Styles */
         .cover-page {
             text-align: center;
             height: 90vh;
@@ -48,7 +46,6 @@
             color: #666;
             font-style: italic;
         }
-
         /* Chapter Container */
         .chapter {
             background: #fff;
@@ -66,6 +63,17 @@
             font-size: 2em;
             margin-bottom: 15px;
         }
+        /* Chapter Title and Number Order: Title at top, then number */
+        .chapter-title {
+            text-align: center;
+            font-size: 1.4em;
+            color: #2E86C1;
+            margin: 20px 0 10px 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-style: italic;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
         .chapter-number {
             text-align: center;
             font-size: 1.4em;
@@ -74,24 +82,14 @@
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-style: italic;
         }
-        .chapter-title {
-            text-align: center;
-            font-size: 1.4em;
-            color: #2E86C1;
-            margin: 20px 0 40px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-style: italic;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-        }
+        /* Chapter Content */
         .chapter-content {
             font-family: Georgia, serif;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
             text-align: justify;
             margin-bottom: 20px;
         }
-
         /* Bilingual Layout (Side-by-Side Columns) */
         .bilingual-wrapper {
             display: flex;
@@ -101,8 +99,7 @@
             width: 50%;
             box-sizing: border-box;
         }
-
-        /* End of Book */
+        /* End of Book Styles */
         .star-decoration {
             text-align: center;
             color: #4A90E2;
@@ -138,11 +135,12 @@
         <!-- Chapters -->
         {% for section in sections %}
         <div class="chapter">
-            <div class="chapter-number">
-                {{ chapter_label }} {{ loop.index }}
-            </div>
+            <!-- Decorative Star is added via ::before -->
             <div class="chapter-title">
                 {{ section.title }}
+            </div>
+            <div class="chapter-number">
+                {{ chapter_label }} {{ loop.index }}
             </div>
             
             {% if bilingual_mode %}
@@ -160,7 +158,7 @@
                 </div>
             </div>
             {% else %}
-            <!-- Single Column -->
+            <!-- Single Column Layout -->
             <div class="chapter-content">
                 {{ section.content }}
             </div>
@@ -168,8 +166,7 @@
 
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container" style="text-align: center; margin-top: 20px;">
-                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
-                     alt="{{ illustrations[loop.index0].caption }}" style="max-width: 100%; border-radius: 5px;">
+                <img src="{{ illustrations[loop.index0].url }}" alt="{{ illustrations[loop.index0].caption }}" style="max-width: 100%; border-radius: 5px;">
                 <p class="illustration-caption" style="font-size: 0.9em; color: #555;">
                     {{ illustration_label }}: {{ illustrations[loop.index0].caption }}
                 </p>
