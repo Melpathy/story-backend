@@ -205,78 +205,78 @@ def generate_story():
         story_length = data.get('story_length', 'short')
         logging.info(f"Received Data: {data}")
 
-            # Setup language configuration as before
-            story_language = data.get('story-language', 'English').lower()
-            custom_language = data.get('custom-language', None)
-            lang_config = get_language_config(story_language, custom_language)
-            context = {
-                'name': data.get('childName', 'child'),
-                'author': data.get('childName', 'child')
-            }
-            formatted_lang = format_language_strings(lang_config, context)
+        # Setup language configuration as before
+        story_language = data.get('story-language', 'English').lower()
+        custom_language = data.get('custom-language', None)
+        lang_config = get_language_config(story_language, custom_language)
+        context = {
+            'name': data.get('childName', 'child'),
+            'author': data.get('childName', 'child')
+        }
+        formatted_lang = format_language_strings(lang_config, context)
+    
+        # Build story prompt and generate full story
+        prompt = build_story_prompt(data, formatted_lang)
+        logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
+        log_memory_usage("Before Story Generation")
+        full_story = story_generator.generate_story(
+            prompt, 
+            formatted_lang['chapter_label'],
+            story_length=story_length
+        )
+    
+        # Split into sections and (optionally) generate illustrations
+        sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
+        illustrations = []  # still empty for now
+    
+        # Check for bilingual mode and if so, translate each chapter
+        bilingual_mode = data.get('bilingual-mode') == 'true'
+        if bilingual_mode:
+            target_language = (data.get('custom-bilingual-language') or data.get('bilingual-language')).strip()
+            bilingual_format = data.get('bilingual-format', '').strip().upper()
+            if bilingual_format == "AABB":
+                for section in sections:
+                    section['translated_title'] = translate_with_mistral(section.get('title', ''), target_language)
+                    section['translated_content'] = translate_with_mistral(section.get('content', ''), target_language)
+    
+        # Render PDF HTML (pass bilingual_mode flag to template)
+        with open("story_template.html") as template_file:
+            template = Template(template_file.read())
+    
+        rendered_html = template.render(
+            title=formatted_lang['story_title'],
+            author=formatted_lang['by_author'],
+            content=full_story,
+            sections=sections,
+            illustrations=illustrations,
+            age=int(data.get('age', 7)),
+            chapter_label=formatted_lang['chapter_label'],
+            end_text=formatted_lang['end_text'],
+            no_illustrations_text=formatted_lang['no_illustrations'],
+            bilingual_mode=bilingual_mode  # added flag
+        )
+    
+        # Queue PDF generation task as before...
+        pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
+        task = generate_pdf_task.delay(rendered_html, pdf_filename)
         
-            # Build story prompt and generate full story
-            prompt = build_story_prompt(data, formatted_lang)
-            logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
-            log_memory_usage("Before Story Generation")
-            full_story = story_generator.generate_story(
-                prompt, 
-                formatted_lang['chapter_label'],
-                story_length=story_length
-            )
-        
-            # Split into sections and (optionally) generate illustrations
-            sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
-            illustrations = []  # still empty for now
-        
-            # Check for bilingual mode and if so, translate each chapter
-            bilingual_mode = data.get('bilingual-mode') == 'true'
-            if bilingual_mode:
-                target_language = (data.get('custom-bilingual-language') or data.get('bilingual-language')).strip()
-                bilingual_format = data.get('bilingual-format', '').strip().upper()
-                if bilingual_format == "AABB":
-                    for section in sections:
-                        section['translated_title'] = translate_with_mistral(section.get('title', ''), target_language)
-                        section['translated_content'] = translate_with_mistral(section.get('content', ''), target_language)
-        
-            # Render PDF HTML (pass bilingual_mode flag to template)
-            with open("story_template.html") as template_file:
-                template = Template(template_file.read())
-        
-            rendered_html = template.render(
-                title=formatted_lang['story_title'],
-                author=formatted_lang['by_author'],
-                content=full_story,
-                sections=sections,
-                illustrations=illustrations,
-                age=int(data.get('age', 7)),
-                chapter_label=formatted_lang['chapter_label'],
-                end_text=formatted_lang['end_text'],
-                no_illustrations_text=formatted_lang['no_illustrations'],
-                bilingual_mode=bilingual_mode  # added flag
-            )
-        
-            # Queue PDF generation task as before...
-            pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
-            task = generate_pdf_task.delay(rendered_html, pdf_filename)
-            
-            return jsonify({
-                "status": "pending",
-                "message": formatted_lang['loading_message'],
-                "task_id": task.id,
-                "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{pdf_filename}"
-            })
-        
-        except Exception as e:
-            logging.error(f"Error in generate_story: {str(e)}")
-            return jsonify({
-                "status": "error", 
-                "message": formatted_lang.get('error_message', str(e))
-            }), 500
-        
-        finally:
-            gc.collect()
-            log_memory_usage("After Request Cleanup")
+        return jsonify({
+            "status": "pending",
+            "message": formatted_lang['loading_message'],
+            "task_id": task.id,
+            "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{pdf_filename}"
+        })
+    
+    except Exception as e:
+        logging.error(f"Error in generate_story: {str(e)}")
+        return jsonify({
+            "status": "error", 
+            "message": formatted_lang.get('error_message', str(e))
+        }), 500
+    
+    finally:
+        gc.collect()
+        log_memory_usage("After Request Cleanup")
             
 
 
