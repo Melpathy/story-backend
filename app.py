@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, send_file, redirect
 from weasyprint import HTML
 from jinja2 import Template
 from datetime import datetime
+from language_handler import get_language_config, format_language_strings, translate_with_mistral
 import boto3
 from botocore.exceptions import NoCredentialsError
 import os
