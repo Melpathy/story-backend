@@ -12,12 +12,10 @@ import logging
 import replicate
 from flask_cors import CORS
 
-
 # Import our new modules
 from config import CELERY_CONFIG, FLASK_CONFIG, STORAGE_CONFIG, API_CONFIG, BASE_URLS
 from utils import sanitize_filename, get_s3_key, log_memory_usage, build_story_prompt
 from story_generator import StoryGenerator
-from language_handler import get_language_config, format_language_strings
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -63,29 +61,18 @@ story_generator = StoryGenerator(API_KEYS["mistral"], replicate_client)
 def generate_presigned_url(bucket_name, s3_key, expiration=3600):
     """
     Generate a temporary pre-signed URL for accessing private PDFs on S3.
-    Args:
-        bucket_name (str): Name of the S3 bucket
-        s3_key (str): Key of the object in S3
-        expiration (int): URL expiration time in seconds (default: 1 hour)
     """
     try:
-        # Ensure expiration is an integer
         expiration = int(expiration)
-        
-        # Generate the pre-signed URL
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={
-                'Bucket': bucket_name,
-                'Key': s3_key
-            },
+            Params={'Bucket': bucket_name, 'Key': s3_key},
             ExpiresIn=expiration
         )
         logging.info(f"✅ Generated pre-signed URL with {expiration}s expiration")
         return presigned_url
     except ValueError as e:
         logging.error(f"❌ Invalid expiration value: {str(e)}")
-        # Fallback to 1 hour if there's an issue with the expiration value
         return s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': bucket_name, 'Key': s3_key},
@@ -97,7 +84,6 @@ def generate_presigned_url(bucket_name, s3_key, expiration=3600):
     except Exception as e:
         logging.error(f"❌ Error generating pre-signed URL: {str(e)}")
         return None
-
 
 @app.after_request
 def add_headers(response):
@@ -114,36 +100,29 @@ def add_headers(response):
 def generate_pdf_task(html_content, pdf_filename):
     """Generate PDF, upload to S3, and return a temporary pre-signed URL."""
     try:
-        # Create temp directory if it doesn't exist
         pdf_dir = "/tmp"
         os.makedirs(pdf_dir, exist_ok=True)
         pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
-
-        # Generate PDF
         HTML(string=html_content).write_pdf(pdf_path)
         logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        # Get S3 bucket name
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
             raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
 
-        # Generate S3 key
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
 
-        # Upload to S3 with specific content headers
         s3_client.upload_file(
             pdf_path, 
             bucket_name, 
             s3_key, 
             ExtraArgs={
                 'ContentType': 'application/pdf',
-                'ContentDisposition': 'inline'  # This tells browsers to display the PDF
+                'ContentDisposition': 'inline'
             }
         )
 
-        # Generate pre-signed URL
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={
@@ -161,14 +140,11 @@ def generate_pdf_task(html_content, pdf_filename):
     except Exception as e:
         logging.error(f"❌ PDF Generation Failed: {str(e)}")
         return None
-          
 
 @app.route('/task-status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
     """Check Celery task status and return S3 URL if ready."""
     task = generate_pdf_task.AsyncResult(task_id)
-    
-    # Get language configuration
     lang_config = get_language_config('english')
     formatted_lang = format_language_strings(lang_config, {'name': '', 'author': ''})
 
@@ -196,17 +172,15 @@ def get_task_status(task_id):
         "message": formatted_lang['processing_message']
     })
 
-
 @app.route('/api/generate-story', methods=['POST'])
 def generate_story():
     """Handle story and PDF generation request."""
     try:
-        # Get request data
         data = request.get_json()
         story_length = data.get('story_length', 'short')
         logging.info(f"Received Data: {data}")
 
-        # Setup language configuration as before
+        # Language configuration
         story_language = data.get('story-language', 'English').lower()
         custom_language = data.get('custom-language', None)
         lang_config = get_language_config(story_language, custom_language)
@@ -216,7 +190,7 @@ def generate_story():
         }
         formatted_lang = format_language_strings(lang_config, context)
     
-        # Build story prompt and generate full story
+        # Build prompt and generate story
         prompt = build_story_prompt(data, formatted_lang)
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
         log_memory_usage("Before Story Generation")
@@ -226,21 +200,22 @@ def generate_story():
             story_length=story_length
         )
     
-        # Split into sections and (optionally) generate illustrations
+        # Split story into sections (each section should have its own title and content)
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
-        illustrations = []  # still empty for now
+        illustrations = []  # No illustrations for now
     
-        # Check for bilingual mode and if so, translate each chapter
+        # Handle bilingual mode: translate chapter title and content separately
         bilingual_mode = data.get('bilingual-mode') == 'true'
         if bilingual_mode:
             target_language = (data.get('custom-bilingual-language') or data.get('bilingual-language')).strip()
             bilingual_format = data.get('bilingual-format', '').strip().upper()
             if bilingual_format == "AABB":
                 for section in sections:
+                    # Translate title and content separately
                     section['translated_title'] = translate_with_mistral(section.get('title', ''), target_language)
                     section['translated_content'] = translate_with_mistral(section.get('content', ''), target_language)
     
-        # Render PDF HTML (pass bilingual_mode flag to template)
+        # Render PDF HTML
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
     
@@ -254,10 +229,9 @@ def generate_story():
             chapter_label=formatted_lang['chapter_label'],
             end_text=formatted_lang['end_text'],
             no_illustrations_text=formatted_lang['no_illustrations'],
-            bilingual_mode=bilingual_mode  # added flag
+            bilingual_mode=bilingual_mode
         )
     
-        # Queue PDF generation task as before...
         pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
         task = generate_pdf_task.delay(rendered_html, pdf_filename)
         
@@ -278,9 +252,6 @@ def generate_story():
     finally:
         gc.collect()
         log_memory_usage("After Request Cleanup")
-            
-
-
 
 @app.route('/download/<filename>')
 def download_file(filename):
@@ -290,11 +261,8 @@ def download_file(filename):
         if not bucket_name:
             raise ValueError("S3_BUCKET_NAME environment variable is missing!")
 
-        # Generate S3 key
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
-
-        # Generate pre-signed URL with inline content disposition
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={
