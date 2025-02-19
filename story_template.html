@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
     <style>
+        /* Overall Page Setup */
         @page {
             margin: 1in;
             size: A4;
             background: #fff9f0;
         }
-        
         html, body {
             background: #fff9f0;
             margin: 0;
-            padding: 20px;
-            min-height: 100%;
+            padding: 0;
         }
 
-        /* Base font styles for all readers – you can adjust this as needed */
-        body {
-            color: #333;
-            font-family: 'Georgia', 'Arial', sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
+        /* Main container for centering content and giving a book-like look */
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        
-        /* Cover page styles */
+
+        /* Cover Page (kept from your original) */
         .cover-page {
             text-align: center;
             height: 90vh;
@@ -34,73 +34,65 @@
             background: linear-gradient(135deg, #fff9f0 0%, #ffe4c4 100%);
             border-radius: 15px;
             margin-bottom: 50px;
-            padding: 20px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        
         .cover-title {
-            font-size: 2.5em;
+            font-size: 2.2em;
             color: #4A90E2;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-style: italic;
         }
-        
         .cover-author {
-            font-size: 1.5em;
+            font-size: 1.3em;
             color: #666;
             font-style: italic;
         }
-        
-        /* Chapter styles */
+
+        /* Chapter Container */
         .chapter {
-            background: rgba(255, 255, 255, 0.7);
+            background: #fff;
             border-radius: 15px;
-            padding: 30px;
             margin: 20px 0;
+            padding: 30px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             page-break-before: always;
         }
-        
         .chapter::before {
             content: "✧";
             display: block;
             text-align: center;
             color: #4A90E2;
             font-size: 2em;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        
         .chapter-number {
             text-align: center;
-            font-size: 1.6em;
+            font-size: 1.4em;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-style: italic;
         }
-        
         .chapter-title {
             text-align: center;
-            font-size: 1.6em;
+            font-size: 1.4em;
             color: #2E86C1;
-            margin: 30px 0 60px 0;
+            margin: 20px 0 40px 0;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-style: italic;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #eee;
-            position: relative;
         }
-        
         .chapter-content {
-            font-size: 1.1em;
-            text-align: justify;
-            padding: 20px;
-            margin-bottom: 30px;
+            font-family: Georgia, serif;
+            font-size: 14px;
             line-height: 1.6;
+            text-align: justify;
+            margin-bottom: 20px;
         }
-        
-        /* Bilingual Layout */
+
+        /* Bilingual Layout (Side-by-Side Columns) */
         .bilingual-wrapper {
             display: flex;
             gap: 20px;
@@ -109,58 +101,52 @@
             width: 50%;
             box-sizing: border-box;
         }
-        
-        /* Star decoration for end section */
+
+        /* End of Book */
         .star-decoration {
             text-align: center;
             color: #4A90E2;
             font-size: 1.5em;
             margin: 30px 0;
         }
-        
-        /* End page styles */
         .the-end {
             text-align: center;
-            font-size: 2.5em;
+            font-size: 2em;
             color: #E67E22;
-            margin-top: 60px;
+            margin-top: 40px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             page-break-before: always;
             font-style: italic;
         }
-        
         .end-note {
             font-style: italic;
             color: #666;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <!-- Cover Page -->
-    <div class="cover-page">
-        <h1 class="cover-title">{{ title }}</h1>
-        <h2 class="cover-author">{{ author }}</h2>
-    </div>
+    <div class="main-container">
+        <!-- Cover Page -->
+        <div class="cover-page">
+            <h1 class="cover-title">{{ title }}</h1>
+            <h2 class="cover-author">{{ author }}</h2>
+        </div>
 
-    <!-- Story Content -->
-    <div class="content">
+        <!-- Chapters -->
         {% for section in sections %}
         <div class="chapter">
-            <!-- Chapter number -->
             <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
             </div>
-
-            <!-- Chapter title -->
             <div class="chapter-title">
                 {{ section.title }}
             </div>
-
+            
             {% if bilingual_mode %}
-            <!-- Bilingual layout: left = original; right = translated -->
+            <!-- Bilingual: side-by-side columns -->
             <div class="bilingual-wrapper">
                 <div class="bilingual-column">
                     <div class="chapter-content">
@@ -174,7 +160,7 @@
                 </div>
             </div>
             {% else %}
-            <!-- Single column layout -->
+            <!-- Single Column -->
             <div class="chapter-content">
                 {{ section.content }}
             </div>
@@ -191,10 +177,8 @@
             {% endif %}
         </div>
         {% endfor %}
-    </div>
 
-    <!-- Story ending section -->
-    <div class="content-section">
+        <!-- End Section -->
         <div class="star-decoration">✧</div>
         <div class="the-end">
             {{ end_text }}
