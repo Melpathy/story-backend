@@ -139,22 +139,16 @@
             line-height: 1.8;
         }
         
-        /* Bilingual Layout */
+        /* Bilingual Layout: Two columns below the chapter title */
         .bilingual-wrapper {
             display: flex;
-            flex-direction: row;
             gap: 20px;
-            padding: 0 20px;
         }
         .bilingual-column {
             width: 50%;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid #eee;
-            border-radius: 10px;
-            padding: 15px;
             box-sizing: border-box;
         }
-
+        
         /* Star decoration */
         .star-decoration {
             text-align: center;
@@ -206,7 +200,7 @@
             </div>
 
             {% if bilingual_mode %}
-            <!-- Two columns for bilingual mode -->
+            <!-- Bilingual layout: left = original; right = translated -->
             <div class="bilingual-wrapper">
                 <div class="bilingual-column">
                     <div class="chapter-content">
@@ -220,7 +214,7 @@
                 </div>
             </div>
             {% else %}
-            <!-- Single column for normal mode -->
+            <!-- Single column layout -->
             <div class="chapter-content">
                 {{ section.content }}
             </div>
