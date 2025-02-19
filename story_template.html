@@ -1,155 +1,150 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
     <style>
-        @page {
-            margin: 0.5in;
-            size: A4;
-            background: #fff9f0;
-        }
-        
-            html, body {
-            background: #fff9f0;
-            margin: 10px;
-            padding: 10px;
-            font-family: 'Arial', sans-serif;
-            color: #333;
-        }
-        
-        /* Cover page styles */
-        .cover-page {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #ffe4c4;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .cover-title {
-            font-size: 2em;
-            color: #4A90E2;
-            margin-bottom: 5px;
-        }
-        
-        .cover-author {
-            font-size: 1.2em;
-            color: #666;
-        }
-        
-        /* Content container */
-        .content {
-            margin: 0 auto;
-            max-width: 800px;
-        }
-        
-        .chapter {
-            margin: 15px 0;
-            padding: 10px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            page-break-inside: avoid;
-        }
-        
-        .chapter-number {
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        /* Bilingual layout styling for children */
-        .bilingual-section {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        
-        .bilingual-column {
-            width: 48%;
-            padding: 8px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        .chapter-title {
-            font-size: 1.4em;
-            margin-bottom: 8px;
-            color: #2E86C1;
-        }
-        
-        .chapter-content {
-            font-size: 1.1em;
-            line-height: 1.6;
-            text-align: justify;
-        }
-        
-        /* End page styles */
-        .the-end {
-            text-align: center;
-            font-size: 1.8em;
-            margin-top: 20px;
-            color: #E67E22;
-        }
-        
-        .end-note {
-            font-style: italic;
-            font-size: 0.9em;
-            color: #666;
-            text-align: center;
-            margin-top: 10px;
-        }
+      @page {
+        margin: 0.5in;
+        size: A4;
+        background: #fff9f0;
+      }
+      body {
+        background: #fff9f0;
+        margin: 0;
+        padding: 10px;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      /* Cover Page Styling */
+      .cover-page {
+        text-align: center;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #ffe4c4;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      }
+      .cover-title {
+        font-size: 2.5em;
+        color: #4A90E2;
+        margin-bottom: 10px;
+      }
+      .cover-author {
+        font-size: 1.5em;
+        color: #666;
+      }
+      /* Chapter Styling */
+      .chapter {
+        background: #fff;
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        page-break-inside: avoid;
+      }
+      .chapter-number {
+        text-align: center;
+        font-size: 1.3em;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      /* Bilingual Layout for Chapters */
+      .bilingual-block {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .bilingual-column {
+        flex: 1;
+        padding: 10px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .chapter-title {
+        font-size: 1.6em;
+        margin-bottom: 10px;
+        color: #2E86C1;
+        text-align: center;
+      }
+      .chapter-content {
+        font-size: 1.2em;
+        text-align: justify;
+      }
+      /* Single Column Layout */
+      .single-column-title {
+        text-align: center;
+        font-size: 1.6em;
+        margin-bottom: 10px;
+        color: #2E86C1;
+      }
+      .single-column-content {
+        font-size: 1.2em;
+        text-align: justify;
+      }
+      /* End Section Styling */
+      .the-end {
+        text-align: center;
+        font-size: 1.8em;
+        margin-top: 30px;
+        color: #E67E22;
+      }
+      .end-note {
+        text-align: center;
+        font-style: italic;
+        color: #666;
+        margin-top: 10px;
+        font-size: 0.9em;
+      }
     </style>
-</head>
-<body>
-    <!-- Story Content -->
-    <div class="content">
-        {% for section in sections %}
-        <div class="chapter">
-            <div class="chapter-number">
-                {{ chapter_label }} {{ loop.index }}
-            </div>
-            {% if bilingual_mode %}
-            <div class="bilingual-section">
-                <div class="bilingual-column">
-                    <div class="chapter-title">{{ section.title }}</div>
-                    <div class="chapter-content">{{ section.content }}</div>
-                </div>
-                <div class="bilingual-column">
-                    <div class="chapter-title">{{ section.translated_title }}</div>
-                    <div class="chapter-content">{{ section.translated_content }}</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="chapter-title">
-                {{ section.title }}
-            </div>
-            <div class="chapter-content">
-                {{ section.content }}
-            </div>
-            {% endif %}
-            {% if illustrations and illustrations[loop.index0] %}
-            <div class="illustration-container">
-                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
-                     alt="{{ illustrations[loop.index0].caption }}">
-                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Story Ending Section -->
-    <div class="content">
-        <div class="the-end">
-            {{ end_text }}
-        </div>
-        {% if not illustrations %}
-        <p class="end-note">{{ no_illustrations_text }}</p>
-        {% endif %}
-    </div>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Cover Page -->
+      <div class="cover-page">
+        <h1 class="cover-title">{{ title }}</h1>
+        <h2 class="cover-author">{{ author }}</h2>
+      </div>
 
-</body>
+      <!-- Story Chapters -->
+      {% for section in sections %}
+      <div class="chapter">
+        <div class="chapter-number">{{ chapter_label }} {{ loop.index }}</div>
+        {% if bilingual_mode %}
+        <div class="bilingual-block">
+          <div class="bilingual-column">
+            <div class="chapter-title">{{ section.title }}</div>
+            <div class="chapter-content">{{ section.content }}</div>
+          </div>
+          <div class="bilingual-column">
+            <div class="chapter-title">{{ section.translated_title }}</div>
+            <div class="chapter-content">{{ section.translated_content }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="single-column-title">{{ section.title }}</div>
+        <div class="single-column-content">{{ section.content }}</div>
+        {% endif %}
+        {% if illustrations and illustrations[loop.index0] %}
+        <div class="illustration-container" style="text-align: center; margin-top: 10px;">
+          <img src="{{ illustrations[loop.index0].url }}" alt="{{ illustrations[loop.index0].caption }}" style="max-width: 100%; border-radius: 5px;">
+          <p style="font-size: 0.9em; color: #555;">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      
+      <!-- End Section -->
+      <div class="the-end">{{ end_text }}</div>
+      {% if not illustrations %}
+      <div class="end-note">{{ no_illustrations_text }}</div>
+      {% endif %}
+    </div>
+  </body>
 </html>
