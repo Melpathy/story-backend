@@ -15,92 +15,76 @@
         padding: 10px;
         font-family: 'Comic Sans MS', cursive, sans-serif;
         color: #333;
-        line-height: 1.6;
+        line-height: 1.5;
       }
       .container {
         max-width: 800px;
-        margin: 0 auto;
+        margin: auto;
       }
-      /* Cover Page Styling */
+      /* Cover Page (similar to Guy Story) */
       .cover-page {
         text-align: center;
         padding: 20px;
-        margin-bottom: 20px;
         background: #ffe4c4;
         border-radius: 10px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        margin-bottom: 20px;
       }
       .cover-title {
         font-size: 2.5em;
         color: #4A90E2;
-        margin-bottom: 10px;
+        margin: 0;
       }
       .cover-author {
         font-size: 1.5em;
         color: #666;
+        margin: 0;
       }
-      /* Chapter Styling */
+      /* Chapter Layout (Guy Story style) */
       .chapter {
-        background: #fff;
-        margin: 20px 0;
+        margin-bottom: 20px;
         padding: 15px;
+        background: #fff;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         page-break-inside: avoid;
+      }
+      .chapter-separator {
+        text-align: center;
+        font-size: 2em;
+        color: #4A90E2;
+        margin-bottom: 5px;
       }
       .chapter-number {
         text-align: center;
         font-size: 1.3em;
         font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .chapter-title {
+        text-align: center;
+        font-size: 1.6em;
+        color: #2E86C1;
         margin-bottom: 10px;
       }
-      /* Bilingual Layout for Chapters */
-      .bilingual-block {
+      .chapter-content {
+        text-align: justify;
+        font-size: 1.2em;
+      }
+      /* Bilingual Columns */
+      .bilingual-chapter {
         display: flex;
         justify-content: space-between;
         gap: 10px;
       }
-      .bilingual-column {
-        flex: 1;
+      .bilingual-chapter .column {
+        width: 48%;
         padding: 10px;
         background: #f9f9f9;
         border: 1px solid #ddd;
         border-radius: 5px;
       }
-      .chapter-title {
-        font-size: 1.6em;
-        margin-bottom: 10px;
-        color: #2E86C1;
-        text-align: center;
-      }
-      .chapter-content {
-        font-size: 1.2em;
-        text-align: justify;
-      }
-      /* Single Column Layout */
-      .single-column-title {
-        text-align: center;
-        font-size: 1.6em;
-        margin-bottom: 10px;
-        color: #2E86C1;
-      }
-      .single-column-content {
-        font-size: 1.2em;
-        text-align: justify;
-      }
-      /* End Section Styling */
-      .the-end {
-        text-align: center;
-        font-size: 1.8em;
-        margin-top: 30px;
-        color: #E67E22;
-      }
-      .end-note {
-        text-align: center;
-        font-style: italic;
-        color: #666;
-        margin-top: 10px;
-        font-size: 0.9em;
+      .bilingual-chapter .column .chapter-title {
+        margin-bottom: 8px;
       }
     </style>
   </head>
@@ -112,24 +96,25 @@
         <h2 class="cover-author">{{ author }}</h2>
       </div>
 
-      <!-- Story Chapters -->
+      <!-- Chapters -->
       {% for section in sections %}
       <div class="chapter">
+        <div class="chapter-separator">✧</div>
         <div class="chapter-number">{{ chapter_label }} {{ loop.index }}</div>
         {% if bilingual_mode %}
-        <div class="bilingual-block">
-          <div class="bilingual-column">
+        <div class="bilingual-chapter">
+          <div class="column">
             <div class="chapter-title">{{ section.title }}</div>
             <div class="chapter-content">{{ section.content }}</div>
           </div>
-          <div class="bilingual-column">
+          <div class="column">
             <div class="chapter-title">{{ section.translated_title }}</div>
             <div class="chapter-content">{{ section.translated_content }}</div>
           </div>
         </div>
         {% else %}
-        <div class="single-column-title">{{ section.title }}</div>
-        <div class="single-column-content">{{ section.content }}</div>
+        <div class="chapter-title">{{ section.title }}</div>
+        <div class="chapter-content">{{ section.content }}</div>
         {% endif %}
         {% if illustrations and illustrations[loop.index0] %}
         <div class="illustration-container" style="text-align: center; margin-top: 10px;">
@@ -141,10 +126,13 @@
       {% endfor %}
       
       <!-- End Section -->
-      <div class="the-end">{{ end_text }}</div>
-      {% if not illustrations %}
-      <div class="end-note">{{ no_illustrations_text }}</div>
-      {% endif %}
+      <div class="chapter">
+        <div class="chapter-separator">✧</div>
+        <div class="chapter-number" style="text-align: center;">{{ end_text }}</div>
+        {% if not illustrations %}
+        <div class="chapter-content" style="text-align: center; font-style: italic;">{{ no_illustrations_text }}</div>
+        {% endif %}
+      </div>
     </div>
   </body>
 </html>
