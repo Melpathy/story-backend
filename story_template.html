@@ -63,16 +63,16 @@
             font-size: 2em;
             margin-bottom: 15px;
         }
-        /* Chapter Title and Number Order: Title at top, then number */
+        /* Chapter Title and Number */
         .chapter-title {
             text-align: center;
             font-size: 1.4em;
             color: #2E86C1;
             margin: 20px 0 10px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-style: italic;
             padding-bottom: 10px;
             border-bottom: 2px solid #eee;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-style: italic;
         }
         .chapter-number {
             text-align: center;
@@ -82,7 +82,7 @@
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-style: italic;
         }
-        /* Chapter Content */
+        /* Chapter Content (default styling) */
         .chapter-content {
             font-family: Georgia, serif;
             font-size: 13px;
@@ -90,16 +90,19 @@
             text-align: justify;
             margin-bottom: 20px;
         }
-        /* Bilingual Layout (Side-by-Side Columns) */
-        .bilingual-wrapper {
-            display: flex;
-            gap: 20px;
+        /* Bilingual Layout using a table for two fixed columns */
+        .bilingual-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-        .bilingual-column {
+        .bilingual-table td {
+            vertical-align: top;
+            padding: 10px;
             width: 50%;
-            box-sizing: border-box;
         }
-        /* End of Book Styles */
+        /* End of Book */
         .star-decoration {
             text-align: center;
             color: #4A90E2;
@@ -131,39 +134,37 @@
             <h1 class="cover-title">{{ title }}</h1>
             <h2 class="cover-author">{{ author }}</h2>
         </div>
-
         <!-- Chapters -->
         {% for section in sections %}
         <div class="chapter">
-            <!-- Decorative Star is added via ::before -->
             <div class="chapter-title">
                 {{ section.title }}
             </div>
             <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
             </div>
-            
             {% if bilingual_mode %}
-            <!-- Bilingual: side-by-side columns -->
-            <div class="bilingual-wrapper">
-                <div class="bilingual-column">
-                    <div class="chapter-content">
-                        {{ section.content }}
-                    </div>
-                </div>
-                <div class="bilingual-column">
-                    <div class="chapter-content">
-                        {{ section.translated_content }}
-                    </div>
-                </div>
-            </div>
+            <!-- Bilingual Layout using a table -->
+            <table class="bilingual-table">
+                <tr>
+                    <td>
+                        <div class="chapter-content">
+                            {{ section.content }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="chapter-content">
+                            {{ section.translated_content }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
             {% else %}
             <!-- Single Column Layout -->
             <div class="chapter-content">
                 {{ section.content }}
             </div>
             {% endif %}
-
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container" style="text-align: center; margin-top: 20px;">
                 <img src="{{ illustrations[loop.index0].url }}" alt="{{ illustrations[loop.index0].caption }}" style="max-width: 100%; border-radius: 5px;">
@@ -174,7 +175,6 @@
             {% endif %}
         </div>
         {% endfor %}
-
         <!-- End Section -->
         <div class="star-decoration">✧</div>
         <div class="the-end">
