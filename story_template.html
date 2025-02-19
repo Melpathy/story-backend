@@ -82,7 +82,7 @@
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
             font-style: italic;
         }
-        /* Chapter Content (default styling) */
+        /* Chapter Content */
         .chapter-content {
             font-family: Georgia, serif;
             font-size: 13px;
@@ -90,7 +90,7 @@
             text-align: justify;
             margin-bottom: 20px;
         }
-        /* Bilingual Layout using a table for two fixed columns */
+        /* Bilingual Layout using a table for fixed two columns */
         .bilingual-table {
             width: 100%;
             table-layout: fixed;
@@ -144,7 +144,7 @@
                 {{ chapter_label }} {{ loop.index }}
             </div>
             {% if bilingual_mode %}
-            <!-- Bilingual Layout using a table -->
+            <!-- Two-column table for bilingual layout -->
             <table class="bilingual-table">
                 <tr>
                     <td>
@@ -160,7 +160,6 @@
                 </tr>
             </table>
             {% else %}
-            <!-- Single Column Layout -->
             <div class="chapter-content">
                 {{ section.content }}
             </div>
