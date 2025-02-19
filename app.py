@@ -12,12 +12,12 @@ import logging
 import replicate
 from flask_cors import CORS
 
-# Import our new modules
+# Import configuration and helper modules
 from config import CELERY_CONFIG, FLASK_CONFIG, STORAGE_CONFIG, API_CONFIG, BASE_URLS
 from utils import sanitize_filename, get_s3_key, log_memory_usage, build_story_prompt
 from story_generator import StoryGenerator
 
-# Initialize Flask app
+# Initialize Flask app and set configuration
 app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = CELERY_CONFIG['BROKER_URL']
 app.config['CELERY_RESULT_BACKEND'] = CELERY_CONFIG['RESULT_BACKEND']
@@ -28,7 +28,7 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'],
                 backend=app.config['CELERY_RESULT_BACKEND'])
 celery.conf.broker_connection_retry_on_startup = CELERY_CONFIG['BROKER_CONNECTION_RETRY_ON_STARTUP']
 
-# Initialize CORS
+# Enable CORS
 CORS(app, resources={r"/*": {"origins": FLASK_CONFIG['CORS_ORIGINS']}}, supports_credentials=True)
 
 # Set up logging
@@ -39,29 +39,22 @@ s3_client = boto3.client(
     "s3",
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=os.getenv("AWS_REGION"),
+    region_name=os.getenv("AWS_REGION")
 )
 
-# Initialize API keys
+# Initialize API keys and validate them
 API_KEYS = {
     "mistral": os.getenv("MISTRAL_API_KEY"),
     "replicate": os.getenv("REPLICATE_API_TOKEN")
 }
-
-# Validate API Keys
 if not all(API_KEYS.values()):
     raise ValueError("Missing required API keys. Check environment variables.")
 
-# Initialize Replicate client
+# Initialize Replicate client and Story Generator
 replicate_client = replicate.Client(api_token=API_KEYS["replicate"])
-
-# Initialize Story Generator
 story_generator = StoryGenerator(API_KEYS["mistral"], replicate_client)
 
 def generate_presigned_url(bucket_name, s3_key, expiration=3600):
-    """
-    Generate a temporary pre-signed URL for accessing private PDFs on S3.
-    """
     try:
         expiration = int(expiration)
         presigned_url = s3_client.generate_presigned_url(
@@ -109,20 +102,17 @@ def generate_pdf_task(html_content, pdf_filename):
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
             raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
-
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
-
         s3_client.upload_file(
-            pdf_path, 
-            bucket_name, 
-            s3_key, 
+            pdf_path,
+            bucket_name,
+            s3_key,
             ExtraArgs={
                 'ContentType': 'application/pdf',
                 'ContentDisposition': 'inline'
             }
         )
-
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={
@@ -133,7 +123,6 @@ def generate_pdf_task(html_content, pdf_filename):
             },
             ExpiresIn=3600
         )
-
         logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
         return presigned_url
 
@@ -150,10 +139,9 @@ def get_task_status(task_id):
 
     if task.state == "PENDING":
         return jsonify({
-            "status": "pending", 
+            "status": "pending",
             "message": formatted_lang['loading_message']
         })
-
     elif task.state == "SUCCESS":
         s3_url = task.result
         if s3_url:
@@ -163,12 +151,12 @@ def get_task_status(task_id):
                 "message": formatted_lang['success_message']
             })
         return jsonify({
-            "status": "error", 
+            "status": "error",
             "message": formatted_lang['error_message']
         }), 500
 
     return jsonify({
-        "status": task.state, 
+        "status": task.state,
         "message": formatted_lang['processing_message']
     })
 
@@ -180,7 +168,7 @@ def generate_story():
         story_length = data.get('story_length', 'short')
         logging.info(f"Received Data: {data}")
 
-        # Language configuration
+        # Set up language configuration
         story_language = data.get('story-language', 'English').lower()
         custom_language = data.get('custom-language', None)
         lang_config = get_language_config(story_language, custom_language)
@@ -189,36 +177,38 @@ def generate_story():
             'author': data.get('childName', 'child')
         }
         formatted_lang = format_language_strings(lang_config, context)
-    
-        # Build prompt and generate story
+
+        # Build the story prompt and generate the full story
         prompt = build_story_prompt(data, formatted_lang)
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
         log_memory_usage("Before Story Generation")
         full_story = story_generator.generate_story(
-            prompt, 
+            prompt,
             formatted_lang['chapter_label'],
             story_length=story_length
         )
-    
-        # Split story into sections (each section should have its own title and content)
+
+        # Split story into sections (each section with its own title and content)
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
-        illustrations = []  # No illustrations for now
-    
-        # Handle bilingual mode: translate chapter title and content separately
+        illustrations = []  # Currently no illustrations
+
+        # Bilingual mode: translate each section's title and content into separate fields
         bilingual_mode = data.get('bilingual-mode') == 'true'
         if bilingual_mode:
             target_language = (data.get('custom-bilingual-language') or data.get('bilingual-language')).strip()
             bilingual_format = data.get('bilingual-format', '').strip().upper()
             if bilingual_format == "AABB":
                 for section in sections:
-                    # Translate title and content separately
-                    section['translated_title'] = translate_with_mistral(section.get('title', ''), target_language)
-                    section['translated_content'] = translate_with_mistral(section.get('content', ''), target_language)
-    
-        # Render PDF HTML
+                    # Retrieve the original title and content
+                    original_title = section.get('title', '')
+                    original_content = section.get('content', '')
+                    # Translate them using the mistral API
+                    section['translated_title'] = translate_with_mistral(original_title, target_language)
+                    section['translated_content'] = translate_with_mistral(original_content, target_language)
+
+        # Render the PDF HTML using the template
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
-    
         rendered_html = template.render(
             title=formatted_lang['story_title'],
             author=formatted_lang['by_author'],
@@ -231,24 +221,24 @@ def generate_story():
             no_illustrations_text=formatted_lang['no_illustrations'],
             bilingual_mode=bilingual_mode
         )
-    
+
         pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
         task = generate_pdf_task.delay(rendered_html, pdf_filename)
-        
+
         return jsonify({
             "status": "pending",
             "message": formatted_lang['loading_message'],
             "task_id": task.id,
             "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{pdf_filename}"
         })
-    
+
     except Exception as e:
         logging.error(f"Error in generate_story: {str(e)}")
         return jsonify({
-            "status": "error", 
+            "status": "error",
             "message": formatted_lang.get('error_message', str(e))
         }), 500
-    
+
     finally:
         gc.collect()
         log_memory_usage("After Request Cleanup")
@@ -260,7 +250,6 @@ def download_file(filename):
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
             raise ValueError("S3_BUCKET_NAME environment variable is missing!")
-
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
         s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
         presigned_url = s3_client.generate_presigned_url(
@@ -273,7 +262,6 @@ def download_file(filename):
             },
             ExpiresIn=3600
         )
-
         if presigned_url:
             return redirect(presigned_url)
         else:
