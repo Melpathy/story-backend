@@ -166,6 +166,25 @@
             margin-top: 20px;
             font-size: 0.9em;
         }
+
+         /* Bilingual layout styles */
+        .chapter-title.bilingual-title, .chapter-content.bilingual {
+            overflow: hidden;
+        }
+        .chapter-title.bilingual-title .column, .chapter-content.bilingual .column {
+            float: left;
+            width: 48%;
+            margin-right: 4%;
+        }
+        .chapter-title.bilingual-title .column:last-child, .chapter-content.bilingual .column:last-child {
+            margin-right: 0;
+        }
+        .chapter-title.bilingual-title:after, .chapter-content.bilingual:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    
     </style>
 </head>
 <body>
@@ -179,19 +198,26 @@
     <div class="content">
         {% for section in sections %}
         <div class="chapter">
-            <!-- Chapter number -->
             <div class="chapter-number">
                 {{ chapter_label }} {{ loop.index }}
             </div>
-
-            <!-- Chapter title -->
+            {% if bilingual_mode %}
+            <div class="chapter-title bilingual-title">
+                <div class="column original">{{ section.title }}</div>
+                <div class="column translated">{{ section.translated_title }}</div>
+            </div>
+            <div class="chapter-content bilingual">
+                <div class="column original">{{ section.content }}</div>
+                <div class="column translated">{{ section.translated_content }}</div>
+            </div>
+            {% else %}
             <div class="chapter-title">
                 {{ section.title }}
             </div>
-
             <div class="chapter-content">
                 {{ section.content }}
             </div>
+            {% endif %}
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
                 <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
@@ -202,12 +228,10 @@
         </div>
         {% endfor %}
     </div>
-
+    
     <!-- Story ending section -->
     <div class="content-section">
         <div class="star-decoration">✧</div>
-        
-        <!-- End Page -->
         <div class="the-end">
             {{ end_text }}
             {% if not illustrations %}
@@ -215,5 +239,6 @@
             {% endif %}
         </div>
     </div>
+
 </body>
 </html>
