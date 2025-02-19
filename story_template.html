@@ -15,47 +15,12 @@
             min-height: 100%;
         }
 
-        /* Age-specific font styles */
-        .young-reader {
-            font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
-            font-size: 18px;
-            line-height: 2.2;
-            letter-spacing: 0.03em;
-        }
-        
-        .middle-reader {
-            font-family: 'Century Gothic', 'Verdana', sans-serif;
-            font-size: 16px;
-            line-height: 2;
-            letter-spacing: 0.02em;
-        }
-        
-        .older-reader {
-            font-family: 'Georgia', 'Arial', sans-serif;
-            font-size: 14px;
-            line-height: 1.8;
-            letter-spacing: normal;
-        }
-        
-        /* Base body styles with age-specific fonts */
+        /* Base font styles for all readers – you can adjust this as needed */
         body {
             color: #333;
-            {% if age <= 8 %}
-                font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
-                font-size: 18px;
-                line-height: 2.2;
-                letter-spacing: 0.03em;
-            {% elif age <= 12 %}
-                font-family: 'Century Gothic', 'Verdana', sans-serif;
-                font-size: 16px;
-                line-height: 2;
-                letter-spacing: 0.02em;
-            {% else %}
-                font-family: 'Georgia', 'Arial', sans-serif;
-                font-size: 14px;
-                line-height: 1.8;
-                letter-spacing: normal;
-            {% endif %}
+            font-family: 'Georgia', 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
         }
         
         /* Cover page styles */
@@ -78,7 +43,6 @@
             color: #4A90E2;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
         }
         
@@ -86,7 +50,6 @@
             font-size: 1.5em;
             color: #666;
             font-style: italic;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
         }
         
         /* Chapter styles */
@@ -114,7 +77,6 @@
             color: #333;
             margin-bottom: 30px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
         }
         
@@ -124,7 +86,6 @@
             color: #2E86C1;
             margin: 30px 0 60px 0;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
             padding-bottom: 20px;
             border-bottom: 2px solid #eee;
@@ -132,14 +93,14 @@
         }
         
         .chapter-content {
-            font-size: 1.2em;
+            font-size: 1.1em;
             text-align: justify;
-            padding: 20px 20px 0 20px;
+            padding: 20px;
             margin-bottom: 30px;
-            line-height: 1.8;
+            line-height: 1.6;
         }
         
-        /* Bilingual Layout: Two columns below the chapter title */
+        /* Bilingual Layout */
         .bilingual-wrapper {
             display: flex;
             gap: 20px;
@@ -149,7 +110,7 @@
             box-sizing: border-box;
         }
         
-        /* Star decoration */
+        /* Star decoration for end section */
         .star-decoration {
             text-align: center;
             color: #4A90E2;
@@ -165,7 +126,6 @@
             margin-top: 60px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             page-break-before: always;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
         }
         
@@ -236,8 +196,6 @@
     <!-- Story ending section -->
     <div class="content-section">
         <div class="star-decoration">✧</div>
-        
-        <!-- End Page -->
         <div class="the-end">
             {{ end_text }}
             {% if not illustrations %}
