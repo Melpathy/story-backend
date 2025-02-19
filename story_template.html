@@ -3,197 +3,107 @@
 <head>
     <style>
         @page {
-            margin: 1in;
+            margin: 0.5in;
             size: A4;
             background: #fff9f0;
         }
         
-        html, body {
+            html, body {
             background: #fff9f0;
-            margin: 0;
-            padding: 20px;
-            min-height: 100%;
-        }
-
-        /* Age-specific font styles */
-        .young-reader {
-            font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
-            font-size: 18px;
-            line-height: 2.2;
-            letter-spacing: 0.03em;
-        }
-        
-        .middle-reader {
-            font-family: 'Century Gothic', 'Verdana', sans-serif;
-            font-size: 16px;
-            line-height: 2;
-            letter-spacing: 0.02em;
-        }
-        
-        .older-reader {
-            font-family: 'Georgia', 'Arial', sans-serif;
-            font-size: 14px;
-            line-height: 1.8;
-            letter-spacing: normal;
-        }
-        
-        /* Base body styles with age-specific fonts */
-        body {
+            margin: 10px;
+            padding: 10px;
+            font-family: 'Arial', sans-serif;
             color: #333;
-            {% if age <= 8 %}
-                font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
-                font-size: 18px;
-                line-height: 2.2;
-                letter-spacing: 0.03em;
-            {% elif age <= 12 %}
-                font-family: 'Century Gothic', 'Verdana', sans-serif;
-                font-size: 16px;
-                line-height: 2;
-                letter-spacing: 0.02em;
-            {% else %}
-                font-family: 'Georgia', 'Arial', sans-serif;
-                font-size: 14px;
-                line-height: 1.8;
-                letter-spacing: normal;
-            {% endif %}
         }
         
         /* Cover page styles */
         .cover-page {
             text-align: center;
-            height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #fff9f0 0%, #ffe4c4 100%);
-            border-radius: 15px;
-            margin-bottom: 50px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #ffe4c4;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .cover-title {
-            font-size: 2.5em;
+            font-size: 2em;
             color: #4A90E2;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
+            margin-bottom: 5px;
         }
         
         .cover-author {
-            font-size: 1.5em;
+            font-size: 1.2em;
             color: #666;
-            font-style: italic;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
         }
         
-        /* Chapter styles */
+        /* Content container */
+        .content {
+            margin: 0 auto;
+            max-width: 800px;
+        }
+        
         .chapter {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            page-break-before: always;
-        }
-        
-        .chapter::before {
-            content: "✧";
-            display: block;
-            text-align: center;
-            color: #4A90E2;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-        
-        .chapter-title {
-            text-align: center;
-            font-size: 1.6em;
-            color: #2E86C1;
-            margin: 30px 0 60px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            position: relative;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
         }
         
         .chapter-number {
             text-align: center;
-            font-size: 1.6em;
-            color: #333;
-            margin-bottom: 30px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* Bilingual layout styling for children */
+        .bilingual-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .bilingual-column {
+            width: 48%;
+            padding: 8px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .chapter-title {
+            font-size: 1.4em;
+            margin-bottom: 8px;
+            color: #2E86C1;
         }
         
         .chapter-content {
-            font-size: 1.2em;
+            font-size: 1.1em;
+            line-height: 1.6;
             text-align: justify;
-            padding: 20px 20px 0 20px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        
-        /* Star decoration */
-        .star-decoration {
-            text-align: center;
-            color: #4A90E2;
-            font-size: 1.5em;
-            margin: 30px 0;
         }
         
         /* End page styles */
         .the-end {
             text-align: center;
-            font-size: 2.5em;
+            font-size: 1.8em;
+            margin-top: 20px;
             color: #E67E22;
-            margin-top: 60px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            page-break-before: always;
-            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
-            font-style: italic;
         }
         
         .end-note {
             font-style: italic;
+            font-size: 0.9em;
             color: #666;
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
+            margin-top: 10px;
         }
-
-         /* Bilingual layout styles */
-        .chapter-title.bilingual-title, .chapter-content.bilingual {
-            overflow: hidden;
-        }
-        .chapter-title.bilingual-title .column, .chapter-content.bilingual .column {
-            float: left;
-            width: 48%;
-            margin-right: 4%;
-        }
-        .chapter-title.bilingual-title .column:last-child, .chapter-content.bilingual .column:last-child {
-            margin-right: 0;
-        }
-        .chapter-title.bilingual-title:after, .chapter-content.bilingual:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-    
     </style>
 </head>
 <body>
-    <!-- Cover Page -->
-    <div class="cover-page">
-        <h1 class="cover-title">{{ title }}</h1>
-        <h2 class="cover-author">{{ author }}</h2>
-    </div>
-
     <!-- Story Content -->
     <div class="content">
         {% for section in sections %}
@@ -202,13 +112,15 @@
                 {{ chapter_label }} {{ loop.index }}
             </div>
             {% if bilingual_mode %}
-            <div class="chapter-title bilingual-title">
-                <div class="column original">{{ section.title }}</div>
-                <div class="column translated">{{ section.translated_title }}</div>
-            </div>
-            <div class="chapter-content bilingual">
-                <div class="column original">{{ section.content }}</div>
-                <div class="column translated">{{ section.translated_content }}</div>
+            <div class="bilingual-section">
+                <div class="bilingual-column">
+                    <div class="chapter-title">{{ section.title }}</div>
+                    <div class="chapter-content">{{ section.content }}</div>
+                </div>
+                <div class="bilingual-column">
+                    <div class="chapter-title">{{ section.translated_title }}</div>
+                    <div class="chapter-content">{{ section.translated_content }}</div>
+                </div>
             </div>
             {% else %}
             <div class="chapter-title">
@@ -229,15 +141,14 @@
         {% endfor %}
     </div>
     
-    <!-- Story ending section -->
-    <div class="content-section">
-        <div class="star-decoration">✧</div>
+    <!-- Story Ending Section -->
+    <div class="content">
         <div class="the-end">
             {{ end_text }}
-            {% if not illustrations %}
-            <p class="end-note">{{ no_illustrations_text }}</p>
-            {% endif %}
         </div>
+        {% if not illustrations %}
+        <p class="end-note">{{ no_illustrations_text }}</p>
+        {% endif %}
     </div>
 
 </body>
