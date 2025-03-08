@@ -5,28 +5,60 @@
         @page {
             margin: 1in;
             size: A4;
+            background: #fff9f0;
         }
         
         html, body {
-            background: {% if genre == 'Fantasy' %} #f0e6ff
-                        {% elif genre == 'Adventure' %} #ffe6cc
-                        {% elif genre == 'Mystery' %} #dfe6e9
-                        {% elif genre == 'Sci-Fi' %} #d1e8ff
-                        {% else %} #fff9f0 {% endif %};
+            background: #fff9f0;
             margin: 0;
             padding: 20px;
             min-height: 100%;
         }
-        
-        /* Font Styles */
-        body {
-            color: #333;
-            font-family: {% if age <= 8 %}'Comic Sans MS', 'Verdana', 'Arial'{% else %}'Georgia', 'Arial'{% endif %}, serif;
-            font-size: {% if age <= 8 %}18px{% elif age <= 12 %}16px{% else %}14px{% endif %};
-            line-height: 2;
+
+        /* Age-specific font styles */
+        .young-reader {
+            font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
+            font-size: 18px;
+            line-height: 2.2;
+            letter-spacing: 0.03em;
         }
         
-        /* Cover Page */
+        .middle-reader {
+            font-family: 'Century Gothic', 'Verdana', sans-serif;
+            font-size: 16px;
+            line-height: 2;
+            letter-spacing: 0.02em;
+        }
+        
+        .older-reader {
+            font-family: 'Georgia', 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.8;
+            letter-spacing: normal;
+        }
+        
+        /* Base body styles with age-specific fonts */
+        body {
+            color: #333;
+            {% if age <= 8 %}
+                font-family: 'Comic Sans MS', 'Verdana', 'Arial', sans-serif;
+                font-size: 18px;
+                line-height: 2.2;
+                letter-spacing: 0.03em;
+            {% elif age <= 12 %}
+                font-family: 'Century Gothic', 'Verdana', sans-serif;
+                font-size: 16px;
+                line-height: 2;
+                letter-spacing: 0.02em;
+            {% else %}
+                font-family: 'Georgia', 'Arial', sans-serif;
+                font-size: 14px;
+                line-height: 1.8;
+                letter-spacing: normal;
+            {% endif %}
+        }
+        
+        /* Cover page styles */
         .cover-page {
             text-align: center;
             height: 90vh;
@@ -40,62 +72,82 @@
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        
         .cover-title {
-            font-size: 2.8em;
+            font-size: 2.5em;
             color: #4A90E2;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
         }
+        
         .cover-author {
             font-size: 1.5em;
             color: #666;
             font-style: italic;
+            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
         }
         
-        /* Chapters */
+        /* Chapter styles */
         .chapter {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.7);
             border-radius: 15px;
             padding: 30px;
             margin: 20px 0;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             page-break-before: always;
         }
+        
         .chapter::before {
-            content: "✦ ✧ ✦";
+            content: "✧";
             display: block;
             text-align: center;
-            font-size: 2.5em;
-            color: {% if genre == 'Mystery' %} #8b0000 {% elif genre == 'Sci-Fi' %} #1e90ff {% else %} #4A90E2 {% endif %};
+            color: #4A90E2;
+            font-size: 2em;
             margin-bottom: 20px;
         }
+        
         .chapter-title {
             text-align: center;
-            font-size: 1.8em;
-            color: {% if genre == 'Fantasy' %} #8a2be2 {% elif genre == 'Adventure' %} #d35400 {% elif genre == 'Sci-Fi' %} #3498db {% elif genre == 'Mystery' %} #2c3e50 {% else %} #2E86C1 {% endif %};
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-        
-        /* Illustrations */
-        .illustration-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .illustration {
-            max-width: 80%;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .illustration-caption {
-            font-size: 1.1em;
+            font-size: 1.6em;
+            color: #2E86C1;
+            margin: 30px 0 60px 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
-            color: #555;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            position: relative;
         }
         
-        /* The End Page */
+        .chapter-number {
+            text-align: center;
+            font-size: 1.6em;
+            color: #333;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
+            font-style: italic;
+        }
+        
+        .chapter-content {
+            font-size: 1.2em;
+            text-align: justify;
+            padding: 20px 20px 0 20px;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        
+        /* Star decoration */
+        .star-decoration {
+            text-align: center;
+            color: #4A90E2;
+            font-size: 1.5em;
+            margin: 30px 0;
+        }
+        
+        /* End page styles */
         .the-end {
             text-align: center;
             font-size: 2.5em;
@@ -103,8 +155,10 @@
             margin-top: 60px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             page-break-before: always;
+            font-family: {% if age <= 8 %}'Comic Sans MS'{% else %}'Georgia'{% endif %}, serif;
             font-style: italic;
         }
+        
         .end-note {
             font-style: italic;
             color: #666;
@@ -115,27 +169,51 @@
     </style>
 </head>
 <body>
+    <!-- Cover Page -->
     <div class="cover-page">
         <h1 class="cover-title">{{ title }}</h1>
         <h2 class="cover-author">{{ author }}</h2>
     </div>
 
+    <!-- Story Content -->
     <div class="content">
         {% for section in sections %}
         <div class="chapter">
-            <div class="chapter-title">{{ chapter_label }} {{ loop.index }}: {{ section.title }}</div>
-            <div class="chapter-content">{{ section.content }}</div>
+            <!-- Chapter number -->
+            <div class="chapter-number">
+                {{ chapter_label }} {{ loop.index }}
+            </div>
+
+            <!-- Chapter title -->
+            <div class="chapter-title">
+                {{ section.title }}
+            </div>
+
+            <div class="chapter-content">
+                {{ section.content }}
+            </div>
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
-                <img src="{{ illustrations[loop.index0].url }}" class="illustration" alt="{{ illustrations[loop.index0].caption }}">
-                <p class="illustration-caption">🖼 <i>{{ illustrations[loop.index0].caption }}</i></p>
+                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
+                     alt="{{ illustrations[loop.index0].caption }}">
+                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
             </div>
             {% endif %}
         </div>
         {% endfor %}
     </div>
 
-    <div class="the-end">✨ {{ end_text }} ✨</div>
-    <p class="end-note">We hope you enjoyed this magical adventure!</p>
+    <!-- Story ending section -->
+    <div class="content-section">
+        <div class="star-decoration">✧</div>
+        
+        <!-- End Page -->
+        <div class="the-end">
+            {{ end_text }}
+            {% if not illustrations %}
+            <p class="end-note">{{ no_illustrations_text }}</p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>
