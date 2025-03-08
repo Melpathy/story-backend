@@ -1,5 +1,6 @@
+# app.py
 from celery import Celery
-from flask import Flask, request, jsonify, send_file, redirect
+from flask import Flask, request, jsonify, redirect
 from weasyprint import HTML
 from jinja2 import Template
 from datetime import datetime
@@ -40,7 +41,6 @@ API_KEYS = {
     "mistral": os.getenv("MISTRAL_API_KEY"),
     "replicate": os.getenv("REPLICATE_API_TOKEN")
 }
-
 if not all(API_KEYS.values()):
     raise ValueError("Missing required API keys. Check environment variables.")
 
@@ -72,114 +72,54 @@ def add_headers(response):
     return response
 
 @celery.task
-def generate_pdf_task(html_content, pdf_filename):
+def generate_entire_story_task(data):
+    """
+    This task handles:
+      1. Generating the story using the AI (Mistral)
+      2. Splitting the story into sections
+      3. Generating an illustration for each section (using Replicate)
+      4. Rendering the final HTML using a Jinja2 template
+      5. Converting the HTML to PDF (using WeasyPrint)
+      6. Uploading the PDF to S3 and returning a pre-signed URL
+    """
     try:
-        pdf_dir = "/tmp"
-        os.makedirs(pdf_dir, exist_ok=True)
-        pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
-
-        HTML(string=html_content).write_pdf(pdf_path)
-        logging.info(f"✅ PDF successfully saved: {pdf_path}")
-
-        bucket_name = os.getenv("S3_BUCKET_NAME")
-        if not bucket_name:
-            raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
-
-        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
-        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
-
-        s3_client.upload_file(
-            pdf_path, 
-            bucket_name, 
-            s3_key, 
-            ExtraArgs={
-                'ContentType': 'application/pdf',
-                'ContentDisposition': 'inline'
-            }
-        )
-
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={
-                'Bucket': bucket_name,
-                'Key': s3_key,
-                'ResponseContentType': 'application/pdf',
-                'ResponseContentDisposition': 'inline'
-            },
-            ExpiresIn=3600
-        )
-
-        logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
-        return presigned_url
-
-    except Exception as e:
-        logging.error(f"❌ PDF Generation Failed: {str(e)}")
-        return None
-
-@app.route('/task-status/<task_id>', methods=['GET'])
-def get_task_status(task_id):
-    task = generate_pdf_task.AsyncResult(task_id)
-    lang_config = get_language_config('english')
-    formatted_lang = format_language_strings(lang_config, {'name': '', 'author': ''})
-
-    if task.state == "PENDING":
-        return jsonify({"status": "pending", "message": formatted_lang['loading_message']})
-    elif task.state == "SUCCESS":
-        s3_url = task.result
-        if s3_url:
-            return jsonify({"status": "completed", "pdf_url": s3_url, "message": formatted_lang['success_message']})
-        return jsonify({"status": "error", "message": formatted_lang['error_message']}), 500
-    else:
-        return jsonify({"status": task.state, "message": formatted_lang['processing_message']})
-
-@app.route('/api/generate-story', methods=['POST'])
-def generate_story():
-    """Handle story and PDF generation request."""
-    try:
-        data = request.get_json()
-        story_length = data.get('story_length', 'short')
-        logging.info(f"Received Data: {data}")
-
-        # Language config
+        # --- Language and Prompt Setup ---
         story_language = data.get('story-language', 'English').lower()
         custom_language = data.get('custom-language', None)
         lang_config = get_language_config(story_language, custom_language)
-        
         context = {
             'name': data.get('childName', 'child'),
             'author': data.get('childName', 'child')
         }
         formatted_lang = format_language_strings(lang_config, context)
 
-        # Build AI prompt
+        # Build the story prompt from the data provided
         prompt = build_story_prompt(data, formatted_lang)
         logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
 
         log_memory_usage("Before Story Generation")
         full_story = story_generator.generate_story(
-            prompt, 
+            prompt,
             formatted_lang['chapter_label'],
-            story_length=story_length
+            story_length=data.get('story_length', 'short')
         )
 
-        # Split story into sections
+        # --- Split Story and Generate Illustrations ---
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
         illustrations = []
-
-        # Generate an illustration for each section using only its own summary
         for section in sections:
+            # Use the section's own title and summary (or fallback)
             chapter_title = section.get('title') or f"{formatted_lang['chapter_label']} {section.get('chapter_number')}"
             chapter_summary = section.get('summary') or section.get('content')[:100]
-
             illustration_prompt = (
                 f"Create a whimsical storybook-style illustration for the chapter titled '{chapter_title}'. "
                 f"Capture the scene where {chapter_summary}. "
                 "Use bright colors and a cohesive visual style that matches the rest of the story."
             )
-
             illustration_url = story_generator.generate_illustration(illustration_prompt)
             illustrations.append(illustration_url)
 
+        # --- Render PDF from Template ---
         log_memory_usage("Before PDF Generation")
         with open("story_template.html") as template_file:
             template = Template(template_file.read())
@@ -196,33 +136,29 @@ def generate_story():
             no_illustrations_text=formatted_lang['no_illustrations'],
         )
 
+        # --- Generate PDF and Upload to S3 ---
+        pdf_dir = "/tmp"
+        os.makedirs(pdf_dir, exist_ok=True)
         pdf_filename = f"{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
-        task = generate_pdf_task.delay(rendered_html, pdf_filename)
+        pdf_path = os.path.join(pdf_dir, pdf_filename.strip().replace(' ', '_'))
+        HTML(string=rendered_html).write_pdf(pdf_path)
+        logging.info(f"✅ PDF successfully saved: {pdf_path}")
 
-        return jsonify({
-            "status": "pending",
-            "message": formatted_lang['loading_message'],
-            "task_id": task.id,
-            "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{pdf_filename}"
-        })
-
-    except Exception as e:
-        logging.error(f"Error in generate_story: {str(e)}")
-        return jsonify({"status": "error", "message": formatted_lang.get('error_message', str(e))}), 500
-
-    finally:
-        gc.collect()
-        log_memory_usage("After Request Cleanup")
-
-@app.route('/download/<filename>')
-def download_file(filename):
-    try:
         bucket_name = os.getenv("S3_BUCKET_NAME")
         if not bucket_name:
-            raise ValueError("S3_BUCKET_NAME environment variable is missing!")
-
+            raise ValueError("❌ ERROR: S3_BUCKET_NAME environment variable is missing!")
         date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
-        s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
+        s3_key = f"pdfs/{date_prefix}/{pdf_filename.strip().replace(' ', '_')}"
+
+        s3_client.upload_file(
+            pdf_path,
+            bucket_name,
+            s3_key,
+            ExtraArgs={
+                'ContentType': 'application/pdf',
+                'ContentDisposition': 'inline'
+            }
+        )
 
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
@@ -234,12 +170,73 @@ def download_file(filename):
             },
             ExpiresIn=3600
         )
+        logging.info(f"✅ Pre-signed URL generated: {presigned_url}")
+        return presigned_url
 
+    except Exception as e:
+        logging.error(f"❌ generate_entire_story_task failed: {str(e)}")
+        raise
+
+@app.route('/task-status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    task = generate_entire_story_task.AsyncResult(task_id)
+    lang_config = get_language_config('english')
+    formatted_lang = format_language_strings(lang_config, {'name': '', 'author': ''})
+    
+    if task.state == "PENDING":
+        return jsonify({"status": "pending", "message": formatted_lang['loading_message']})
+    elif task.state == "SUCCESS":
+        result = task.result  # This should be the S3 URL
+        if result:
+            return jsonify({"status": "completed", "pdf_url": result, "message": formatted_lang['success_message']})
+        else:
+            return jsonify({"status": "error", "message": formatted_lang['error_message']}), 500
+    else:
+        return jsonify({"status": task.state, "message": formatted_lang['processing_message']})
+
+@app.route('/api/generate-story', methods=['POST'])
+def generate_story_route():
+    """Enqueue the entire story generation process as a Celery task."""
+    try:
+        data = request.get_json()
+        logging.info(f"Received Data: {data}")
+        # Immediately enqueue the Celery task
+        task = generate_entire_story_task.delay(data)
+        return jsonify({
+            "status": "pending",
+            "message": "Your story is being generated...",
+            "task_id": task.id,
+            "pdf_url": f"{BASE_URLS['DOWNLOAD']}/{sanitize_filename(data.get('childName', 'child'))}_story.pdf"
+        })
+    except Exception as e:
+        logging.error(f"Error in generate_story_route: {str(e)}")
+        return jsonify({"status": "error", "message": "An error occurred while processing your request."}), 500
+    finally:
+        gc.collect()
+        log_memory_usage("After Request Cleanup")
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    try:
+        bucket_name = os.getenv("S3_BUCKET_NAME")
+        if not bucket_name:
+            raise ValueError("S3_BUCKET_NAME environment variable is missing!")
+        date_prefix = datetime.utcnow().strftime('%Y-%m-%d')
+        s3_key = f"pdfs/{date_prefix}/{filename.strip().replace(' ', '_')}"
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': s3_key,
+                'ResponseContentType': 'application/pdf',
+                'ResponseContentDisposition': 'inline'
+            },
+            ExpiresIn=3600
+        )
         if presigned_url:
             return redirect(presigned_url)
         else:
             return jsonify({"status": "error", "message": "Failed to generate pre-signed URL"}), 500
-
     except Exception as e:
         logging.error(f"❌ Error serving PDF: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
