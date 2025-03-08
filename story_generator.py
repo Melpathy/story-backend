@@ -1,6 +1,5 @@
 import logging
 import requests
-import random
 from config import API_CONFIG, IMAGE_CONFIG, STORY_LENGTH_CONFIG
 import re
 
@@ -73,35 +72,25 @@ class StoryGenerator:
         return story_text
 
     def _call_mistral_api(self, prompt, max_tokens=None):
-        """Make API call to Mistral for more diverse stories."""
+        """Make API call to Mistral."""
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-    
-        # Randomly select a storytelling style for variation
-        storytelling_styles = [
-            "Write in the style of a whimsical fairy tale.",
-            "Make the story sound like an epic adventure.",
-            "Use playful, rhyming sentences to tell the story.",
-            "Write as if it's a bedtime story from a wise old traveler."
-        ]
-        style_prompt = f"{prompt} {random.choice(storytelling_styles)}"
-    
+        
         payload = {
             "model": API_CONFIG['MISTRAL_MODEL'],
             "messages": [
                 {"role": "system", "content": "You are an expert children's story writer."},
-                {"role": "user", "content": style_prompt}
+                {"role": "user", "content": prompt}
             ],
-            "max_tokens": max_tokens if max_tokens else API_CONFIG['MAX_TOKENS'],
-            "temperature": 0.9  # Increased for more creativity
+            "max_tokens": max_tokens if max_tokens is not None else API_CONFIG['MAX_TOKENS'],
+            "temperature": 0.7
         }
-    
+        
         response = requests.post(url, json=payload, headers=headers)
         return response.json() if response.status_code == 200 else None
-
 
     def split_into_sections(self, story_text, chapter_label, story_length="short"):
         """Split story into sections."""
@@ -155,34 +144,17 @@ class StoryGenerator:
         return self.generate_story(summary_prompt, "Summary", story_length="short")
 
     def generate_illustration(self, prompt):
-        """Generate more unique and artistic illustrations."""
+        """Generate illustration using Replicate."""
         try:
-            art_styles = [
-                "watercolor painting",
-                "cartoon-style with bright colors",
-                "storybook sketch with soft pastels",
-                "vintage fairy tale illustration",
-                "magical realism with dreamy lighting"
-            ]
-    
-            # Enrich the prompt
-            detailed_prompt = (
-                f"Illustrate this scene in a {random.choice(art_styles)}. "
-                f"Make sure to capture the emotions of the characters and the atmosphere of the setting. "
-                f"Use vibrant colors and rich details to make the image engaging."
-                f"\n\n{prompt}"
-            )
-    
             input_data = {
-                "prompt": detailed_prompt,
+                "prompt": prompt,
                 "width": IMAGE_CONFIG['WIDTH'],
                 "height": IMAGE_CONFIG['HEIGHT']
             }
-    
+            
             output = self.replicate_client.run(IMAGE_CONFIG['MODEL'], input=input_data)
             return output[0] if output else None
             
         except Exception as e:
             logging.error(f"Illustration generation error: {str(e)}")
             return None
-
