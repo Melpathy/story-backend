@@ -1,5 +1,6 @@
 import logging
 import requests
+import random
 from config import API_CONFIG, IMAGE_CONFIG, STORY_LENGTH_CONFIG
 import re
 
