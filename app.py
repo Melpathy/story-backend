@@ -233,7 +233,19 @@ def generate_story():
         
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
-        illustrations = []  # Empty for now - can be enabled later
+        illustrations = []
+        for section in sections:
+            # Use the chapter title if available; otherwise, create a fallback title
+            chapter_title = section.get('title') or f"Chapter {section.get('chapter_number')}"
+            # Use the summary or fallback to first 100 characters of content
+            chapter_summary = section.get('summary') or section.get('content')[:100]
+            illustration_prompt = (
+                f"Create an illustration for the chapter titled '{chapter_title}'. "
+                f"Capture the scene where {chapter_summary}. "
+                "Style it as a vibrant, whimsical storybook image."
+            )
+            illustration_url = story_generator.generate_illustration(illustration_prompt)
+            illustrations.append(illustration_url)
 
         # Generate PDF
         log_memory_usage("Before PDF Generation")
