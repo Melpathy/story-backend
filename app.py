@@ -240,9 +240,9 @@ def generate_story():
             # Use the summary or fallback to first 100 characters of content
             chapter_summary = section.get('summary') or section.get('content')[:100]
             illustration_prompt = (
-                f"Create an illustration for the chapter titled '{chapter_title}'. "
+                f"Create a whimsical storybook-style illustration for the chapter titled '{chapter_title}'. "
                 f"Capture the scene where {chapter_summary}. "
-                "Style it as a vibrant, whimsical storybook image."
+                "Use bright colors and a cohesive visual style that matches the rest of the story."
             )
             illustration_url = story_generator.generate_illustration(illustration_prompt)
             illustrations.append(illustration_url)
