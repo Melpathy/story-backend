@@ -7,7 +7,6 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 import os
 import gc
-import random
 import logging
 import replicate
 from flask_cors import CORS
@@ -235,24 +234,6 @@ def generate_story():
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
         illustrations = []  # Empty for now - can be enabled later
-        # illustration_url = story_generator.generate_illustration(illustration_prompt)
-
-        # Loop over each chapter section and generate an illustration prompt
-        for section in sections:
-            # Use chapter title if available, otherwise fall back to content summary
-            chapter_title = section.get('title') or f"Chapter {section.get('chapter_number')}"
-            chapter_summary = section.get('summary') or section.get('content')[:100]  # Use first 100 chars as fallback
-            
-            illustration_prompt = (
-                f"Create an illustration for the chapter titled '{chapter_title}'. "
-                f"Capture the scene where {chapter_summary}. "
-                "Style it as a vibrant, whimsical storybook image."
-            )
-            
-            # Generate illustration and collect its URL
-            illustration_url = story_generator.generate_illustration(illustration_prompt)
-            illustrations.append(illustration_url)
-
 
         # Generate PDF
         log_memory_usage("Before PDF Generation")
