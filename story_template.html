@@ -61,7 +61,7 @@
         /* Cover page styles */
         .cover-page {
             text-align: center;
-            height: 90vh;
+            /* Removed height: 90vh to avoid WeasyPrint warnings */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -166,6 +166,24 @@
             margin-top: 20px;
             font-size: 0.9em;
         }
+
+        /* Illustration styles */
+        .illustration-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .illustration {
+            max-width: 300px; /* Adjust width as needed */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .illustration-caption {
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -192,11 +210,16 @@
             <div class="chapter-content">
                 {{ section.content }}
             </div>
+
             {% if illustrations and illustrations[loop.index0] %}
             <div class="illustration-container">
-                <img src="{{ illustrations[loop.index0].url }}" class="illustration" 
+                <img 
+                     src="{{ illustrations[loop.index0].url }}" 
+                     class="illustration" 
                      alt="{{ illustrations[loop.index0].caption }}">
-                <p class="illustration-caption">{{ illustration_label }}: {{ illustrations[loop.index0].caption }}</p>
+                <p class="illustration-caption">
+                    {{ illustration_label }}: {{ illustrations[loop.index0].caption }}
+                </p>
             </div>
             {% endif %}
         </div>
