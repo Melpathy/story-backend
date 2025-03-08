@@ -235,7 +235,8 @@ def generate_story():
         # Split into sections and generate illustrations
         sections = story_generator.split_into_sections(full_story, formatted_lang['chapter_label'])
         # illustrations = []  # Empty for now - can be enabled later
-        illustration_url = generate_illustration(illustration_prompt)
+        illustration_url = story_generator.generate_illustration(illustration_prompt)
+
 
         # Generate PDF
         log_memory_usage("Before PDF Generation")
