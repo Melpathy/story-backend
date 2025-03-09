@@ -15,26 +15,29 @@ class StoryGenerator:
             max_tokens = length_config["max_tokens"]
             target_sections = length_config["target_sections"]
 
-            # Add length guidance to prompt
-            formatted_prompt = f"""{prompt}
-            Structure the story into approximately {target_sections} chapters.
-            Ensure the story has a proper beginning, middle, and end.
-            IMPORTANT: Provide a complete story with proper resolution - do not end abruptly.
-            Use "{chapter_label} X:" to label each chapter.
-            """
+            formatted_prompt = (
+                f"{prompt}\n\n"
+                f"Structure the story into about {target_sections} chapters. "
+                f"Use \"{chapter_label} X:\" for each chapter. "
+                "Provide a complete story with a proper resolution."
+            )
 
-            response = self._call_mistral_api(formatted_prompt, max_tokens)
+            response = self._call_mistral_api(
+                formatted_prompt, 
+                max_tokens=max_tokens, 
+                target_language=target_language
+            )
+
             if response:
-                story_text = response["choices"][0]["message"]["content"]
-                if self._verify_story_completion(story_text):
+                    story_text = response["choices"][0]["message"]["content"]
+                    # ...
                     return story_text
                 else:
-                    # If story seems incomplete, try to generate a proper ending
-                    return self._ensure_story_completion(story_text, chapter_label, max_tokens)
-            return "Error generating story."
-        except Exception as e:
-            logging.error(f"Story generation error: {str(e)}")
-            return f"Error generating story: {str(e)}"
+                    return "Error generating story."
+        
+            except Exception as e:
+                logging.error(f"Story generation error: {str(e)}")
+                return f"Error generating story: {str(e)}"
 
     def _verify_story_completion(self, story_text):
         """Basic verification of story completion."""
@@ -93,14 +96,13 @@ class StoryGenerator:
                 {"role": "user", "content": prompt}
             ],
             "max_tokens": max_tokens if max_tokens else API_CONFIG['MAX_TOKENS'],
-            "temperature": 0.9
+            "temperature": 0.7
         }
     
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code == 200:
             return response.json()
         return None
-
     def split_into_sections(self, story_text, chapter_label, story_length="short"):
         sections = []
         chapter_regex = re.compile(rf"({chapter_label}\s*\d+[:.]?)", re.IGNORECASE)
