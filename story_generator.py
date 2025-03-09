@@ -93,22 +93,21 @@ class StoryGenerator:
         return response.json() if response.status_code == 200 else None
 
     def split_into_sections(self, story_text, chapter_label, story_length="short"):
-        """Split story into sections."""
         sections = []
         chapter_regex = re.compile(rf"({chapter_label}\s*\d+[:.]?)", re.IGNORECASE)
         parts = chapter_regex.split(story_text)[1:]
         
-        # Get target sections from config instead of using self.max_sections
-        target_sections = STORY_LENGTH_CONFIG[story_length]["target_sections"]
-        section_count = min(len(parts) // 2, target_sections)
-        
+        # Parse ALL chapters that appear in the text
+        # (Divide by 2 because split() returns [chapter_label, content, chapter_label, content, ...])
+        section_count = len(parts) // 2
+    
         for i in range(0, section_count * 2, 2):
             section = self._process_section(parts[i:i+2], chapter_label)
             if section:
                 sections.append(section)
-        
+    
         return sections
-
+        
     def _process_section(self, part_pair, chapter_label):
         """Process a single story section."""
         if len(part_pair) < 2:
