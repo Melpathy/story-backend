@@ -70,26 +70,36 @@ class StoryGenerator:
             return f"{story_text}\n\n{ending}"
         return story_text
 
-    def _call_mistral_api(self, prompt, max_tokens=None):
-        """Make API call to Mistral."""
+    def _call_mistral_api(self, prompt, max_tokens=None, target_language="english"):
+        """Make API call to Mistral and force output language."""
         url = "https://api.mistral.ai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
+    
+        # System instruction telling Mistral to output ONLY in the target language
+        system_content = (
+            f"You are an expert children's story writer. "
+            f"All user instructions may be in English, but you MUST produce your final story text "
+            f"ENTIRELY in {target_language}. "
+            f"Do not respond in any other language."
+        )
+    
         payload = {
             "model": API_CONFIG['MISTRAL_MODEL'],
             "messages": [
-                {"role": "system", "content": "You are an expert children's story writer."},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": max_tokens if max_tokens is not None else API_CONFIG['MAX_TOKENS'],
-            "temperature": 0.7
+            "max_tokens": max_tokens if max_tokens else API_CONFIG['MAX_TOKENS'],
+            "temperature": 0.9
         }
-        
+    
         response = requests.post(url, json=payload, headers=headers)
-        return response.json() if response.status_code == 200 else None
+        if response.status_code == 200:
+            return response.json()
+        return None
 
     def split_into_sections(self, story_text, chapter_label, story_length="short"):
         sections = []
