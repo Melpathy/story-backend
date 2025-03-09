@@ -35,9 +35,9 @@ class StoryGenerator:
                 else:
                     return "Error generating story."
         
-            except Exception as e:
-                logging.error(f"Story generation error: {str(e)}")
-                return f"Error generating story: {str(e)}"
+        except Exception as e:
+            logging.error(f"Story generation error: {str(e)}")
+            return f"Error generating story: {str(e)}"
 
     def _verify_story_completion(self, story_text):
         """Basic verification of story completion."""
