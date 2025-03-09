@@ -93,6 +93,7 @@ def generate_entire_story_task(data):
         formatted_lang = format_language_strings(lang_config, context)
 
         # Build your prompt in English (as you do now)
+        logging.info(f"formatted_lang: {formatted_lang}")
         prompt = build_story_prompt(data, formatted_lang)  # This is in English
 
         # Pass the user’s language so Mistral responds in that language
