@@ -19,7 +19,6 @@ class StoryGenerator:
             formatted_prompt = f"""{prompt}
             Structure the story into approximately {target_sections} chapters.
             Ensure the story has a proper beginning, middle, and end.
-            Each chapter should be balanced in length.
             IMPORTANT: Provide a complete story with proper resolution - do not end abruptly.
             Use "{chapter_label} X:" to label each chapter.
             """
