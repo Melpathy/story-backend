@@ -83,25 +83,17 @@ def generate_entire_story_task(data):
       6. Uploading the PDF to S3 and returning a pre-signed URL
     """
     try:
-        # --- Language and Prompt Setup ---
         story_language = data.get('story-language', 'English').lower()
-        custom_language = data.get('custom-language', None)
-        lang_config = get_language_config(story_language, custom_language)
-        context = {
-            'name': data.get('childName', 'child'),
-            'author': data.get('childName', 'child')
-        }
-        formatted_lang = format_language_strings(lang_config, context)
 
-        # Build the story prompt from the data provided
-        prompt = build_story_prompt(data, formatted_lang)
-        logging.info(f"📝 Full AI Prompt:\n{prompt}\n")
+        # Build your prompt in English (as you do now)
+        prompt = build_story_prompt(data, formatted_lang)  # This is in English
 
-        log_memory_usage("Before Story Generation")
+        # Pass the user’s language so Mistral responds in that language
         full_story = story_generator.generate_story(
             prompt,
             formatted_lang['chapter_label'],
-            story_length=data.get('story_length', 'short')
+            story_length=data.get('story_length', 'short'),
+            target_language=story_language  # e.g. "french", "spanish", etc.
         )
 
         # --- Split Story and Generate Illustrations ---
