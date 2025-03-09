@@ -117,7 +117,11 @@ def generate_entire_story_task(data):
                 "Use bright colors and a cohesive visual style that matches the rest of the story."
             )
             illustration_url = story_generator.generate_illustration(illustration_prompt)
-            illustrations.append(illustration_url)
+            illustrations.append({
+                "url": illustration_url,
+                # You can decide what to display as the caption
+                "caption": chapter_title  # e.g. show the chapter title as the caption
+            })
 
         # --- Render PDF from Template ---
         log_memory_usage("Before PDF Generation")
