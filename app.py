@@ -84,6 +84,13 @@ def generate_entire_story_task(data):
     """
     try:
         story_language = data.get('story-language', 'English').lower()
+        custom_language = data.get('custom-language', None)
+        lang_config = get_language_config(story_language, custom_language)
+        context = {
+            'name': data.get('childName', 'child'),
+            'author': data.get('childName', 'child')
+        }
+        formatted_lang = format_language_strings(lang_config, context)
 
         # Build your prompt in English (as you do now)
         prompt = build_story_prompt(data, formatted_lang)  # This is in English
